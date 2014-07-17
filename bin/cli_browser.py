@@ -46,7 +46,7 @@ class cli_browser(object):
         if __response is None:
             __response = self.responseContent
 
-        pages = re.findall(r'href="/search\?p=(.?)', __response, re.IGNORECASE)
+        pages = re.findall(r'href="/search\?p=(.+?)&', __response, re.IGNORECASE)
         return pages
 
     def getCurrentPage(self):
