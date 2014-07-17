@@ -1,0 +1,6 @@
+{
+    "configs":{
+        "pagination": false,
+        "interactive": true
+    }
+}
