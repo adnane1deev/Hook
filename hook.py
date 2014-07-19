@@ -13,7 +13,7 @@ def main():
         print "[{0:2}] : {1}".format((repo_index+1), repos_list[repo_index][1:])
 
     print "Current page: {0}".format(cmd_browser.getCurrentPage())
-    print "Available pages: "
+    print "Available pages: ",
     pages = cmd_browser.parsePagination(response)
     for page in pages[:]:
         print("{0:1}".format(page)),
