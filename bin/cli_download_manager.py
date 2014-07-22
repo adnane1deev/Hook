@@ -98,7 +98,7 @@ urls = ["https://github.com/bower/registry/archive/master.zip",
 browserObject = cli_browser()
 browserConnection = browserObject.getHttpConnection()
 downloadManager = download_manager()
-downloadManager.chaineBrowserConnection(browserConnection)
+downloadManager.plugInBrowserWithDownloadManager(browserConnection)
 downloadManager.startQueue(urls)
 
 browserConnection.close()
