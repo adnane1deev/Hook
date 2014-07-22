@@ -1,8 +1,8 @@
 __author__ = 'Adnane Deev'
 
-import urllib2
 import types
 import pprint as pn
+from cli_browser import cli_browser
 
 
 class idm_exception(Exception):
@@ -19,6 +19,7 @@ class download_manager(object):
         self.__types = {'application/zip': 'zip', 'application/rar': 'rar'}
         self.__URLS = []
         self.__URL = ''
+        self.__browser = None
 
     def setURL(self, _url):
         self.__URL = _url
@@ -36,7 +37,7 @@ class download_manager(object):
         file_handler = None
 
         while file_size is None:
-            http_connection = urllib2.urlopen(_url)
+            http_connection = self.__browser.open(_url)
             metadata = http_connection.info()
             print pn.pprint(metadata.dict, indent="2")
             file_name = _url.split('/')[-4]+"-"+_url.split('/')[-3]+"."+self.__types[metadata.getheaders("content-type")[0]]
@@ -83,8 +84,22 @@ class download_manager(object):
         except idm_exception as e:
             print e.value
 
+    def plugInBrowserWithDownloadManager(self, _browser):
+        self.__browser = _browser
+
+"""
+    Testing if it functions as required
+"""
+
 urls = ["https://github.com/bower/registry/archive/master.zip",
         "https://github.com/bower/bower/archive/master.zip",
         "https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip"]
-idm = download_manager()
-idm.startQueue("https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip")
+
+browserObject = cli_browser()
+browserConnection = browserObject.getHttpConnection()
+downloadManager = download_manager()
+downloadManager.chaineBrowserConnection(browserConnection)
+downloadManager.startQueue(urls)
+
+browserConnection.close()
+browserObject.closeConnections()
