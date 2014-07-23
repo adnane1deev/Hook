@@ -50,14 +50,59 @@ class cli_browser(object):
             _response = self.__responseContent
 
         pages = re.findall(r'href="/search\?p=(.+?)&', _response, re.IGNORECASE)
-        return pages
+        if len(pages) > 0:
+            return pages
+
+        return None
 
     def getCurrentPage(self):
-        currentPage = re.search(r'class="current">(.?)<', self.__responseContent, re.IGNORECASE).group(1)
-        return currentPage
+        try:
+            currentPage = re.search(r'class="current">(.?)<', self.__responseContent, re.IGNORECASE).group(1)
+            return currentPage
+        except AttributeError as e:
+            return None
 
     def enablePagination(self, _decision):
         self.__pagination = _decision
 
+    def parseVersions(self, _res):
+        #<span class="tag-name">(.+?)</span>
+        #tags\?after=
+        return re.findall(r'<span class="tag-name">(.+?)</span>', _res, re.IGNORECASE)
+
+    def __isStillMore(self, _response):
+        return re.search(r'tags\?after=', _response, re.IGNORECASE)
+
+    def getPackageVersions(self, _response):
+        versions = []
+        versions.extend(self.parseVersions(_response))
+        while self.__isStillMore(_response):
+            self.setRequestedURL(self.getRequestedURL()+'?after='+versions[-1])
+            _response = self.submit()
+            versions.extend(self.parseVersions(_response))
+
+        return versions
+
+    def testing(self):
+        #<p class="description css-truncate-target">\n*\s*(.+?)\s*\n*</p>
+        return re.findall(r'<p class="description css-truncate-target">\n*\s*(.+?)\s*\n*</p>', self.__responseContent, re.IGNORECASE)
+
     def closeConnections(self):
         self.__cli_browser_opener.close()
+
+#https://github.com/angular/angular.js/tags
+"""
+browser = cli_browser()
+browser.setRequestedURL('https://github.com/angular/angular.js/tags')
+response = browser.submit()
+
+v = browser.getPackageVersions(response)
+browser.closeConnections()
+import pprint
+print pprint.pprint(v, indent=4)
+print len(v)
+"""
+"""
+hn = open('test.html', "w")
+hn.write(response)
+hn.close()"""
