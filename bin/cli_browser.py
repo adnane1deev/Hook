@@ -37,12 +37,23 @@ class cli_browser(object):
         return self.__requestedURL
 
     def submit(self):
-        response = self.__cli_browser_opener.open(self.__requestedURL)
-        self.__responseContent = response.read()
-        return self.__responseContent
+        attempts = 0
+        while attempts < 10:
+            try:
+                response = self.__cli_browser_opener.open(self.__requestedURL)
+                self.__responseContent = response.read()
+                return self.__responseContent
+            except urllib2.URLError as e:
+                if attempts < 10:
+                    attempts += 1
+                    print "attempting ..."
+                else:
+                    print e.errno, ' ', e.filename, ' ', e.message, ' ', e.reason, ' ', e.strerror
 
     def parseResponse(self, _response):
-        repositories = re.findall(r'<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s', _response, re.IGNORECASE)
+        #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s
+        #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*<p.+\n*\s*(.+?)\n
+        repositories = re.findall(r'<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*(<p\sclass="description css-truncate-target">\n\s*(.+?)\n|)', _response, re.IGNORECASE)
         return repositories
 
     def parsePagination(self, _response=None):
@@ -51,7 +62,7 @@ class cli_browser(object):
 
         pages = re.findall(r'href="/search\?p=(.+?)&', _response, re.IGNORECASE)
         if len(pages) > 0:
-            return pages
+            return pages[:-1]
 
         return None
 
@@ -82,18 +93,18 @@ class cli_browser(object):
             versions.extend(self.parseVersions(_response))
 
         return versions
-
+    """
     def testing(self):
         #<p class="description css-truncate-target">\n*\s*(.+?)\s*\n*</p>
         return re.findall(r'<p class="description css-truncate-target">\n*\s*(.+?)\s*\n*</p>', self.__responseContent, re.IGNORECASE)
-
+    """
     def closeConnections(self):
         self.__cli_browser_opener.close()
 
 #https://github.com/angular/angular.js/tags
 """
 browser = cli_browser()
-browser.setRequestedURL('https://github.com/angular/angular.js/tags')
+browser.setRequestedURL('https://github.com/dsel/dsel.github.io/tags')
 response = browser.submit()
 
 v = browser.getPackageVersions(response)

@@ -4,9 +4,11 @@ __author__ = 'Asus'
 import os
 import sys
 import re
+import json
 import ctypes
 import distutils.dir_util as dir_util
 from os.path import expanduser
+from zipfile import *
 
 
 def define_operation_system():
@@ -33,9 +35,13 @@ def remove_directory(_path):
 
 
 def create_file(_file_name, _content=''):
+    """
     if not os.path.exists(_file_name):
         with open(_file_name, "w") as handler:
             handler.write(_content)
+    """
+    with open(_file_name, "w+") as handler:
+        handler.write(_content)
 
 
 def create_directory(_dir_name):
@@ -60,7 +66,17 @@ def __hide(_name):
     ret = ctypes.windll.kernel32.SetFileAttributesW(ur''+_name, FILE_ATTRIBUTE_HIDDEN)
 
     if ret:
-        print 'attribute set to Hidden'
+        print #'attribute set to Hidden'
+    else:  # return code of zero indicates failure, raise Windows error
+        raise WinError()
+
+
+def __show(_name):
+    FILE_ATTRIBUTE_VISIBLE = 0x04
+    ret = ctypes.windll.kernel32.SetFileAttributesW(ur''+_name, FILE_ATTRIBUTE_VISIBLE)
+
+    if ret:
+        print #'attribute set to visible'
     else:  # return code of zero indicates failure, raise Windows error
         raise WinError()
 
@@ -72,6 +88,35 @@ def __check_environment(_path):
 
 def get_home():
     return expanduser("~")
+
+
+def get_current_path():
+    return os.path.abspath(".")
+
+
+def object_to_json(_json_object):
+    return json.dumps(_json_object, indent=4)
+
+
+def generate_json_file(_filename, _pkg_list):
+    json_object = {"require": _pkg_list}
+    content = object_to_json(json_object)
+    create_file(_filename, content)
+
+
+def create_tree(_tree):
+    os.makedirs(_tree)
+
+
+def decompress_zipfile(_filename, _to_path):
+    try:
+        zip_archive = ZipFile(_filename, mode="r", compression=ZIP_STORED, allowZip64=False)
+        zip_archive.extractall(path=_to_path)
+        zip_archive.close()
+    except IOError as (nerror, strerror):
+        print nerror, ' ', strerror
+    except BadZipfile as e:
+        print e.message
 
 
 if define_operation_system() == 'windows':
@@ -94,4 +139,4 @@ if not os.path.exists(".hook"):
     print "eeee"
 """
 
-print get_home()
+#print __get_home()

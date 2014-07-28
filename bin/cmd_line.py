@@ -1,13 +1,15 @@
 __author__ = 'Adnane deev'
 
-import argparse
 import re
+import argparse
+import cli_browser
+import helper_functions as d
 import hook_system_variables as hook
 from colorama import init, Fore, Back
-from datetime import datetime
-import cli_browser
 from HTMLParser import HTMLParser
-import helper_functions as d
+from datetime import datetime
+import os_operations as op
+
 
 class cmd_line(object):
 
@@ -21,18 +23,23 @@ class cmd_line(object):
             conflict_handler='resolve'
         )
 
-    def __cmd_init(self, _interactive=False, _pversion=False):
-        created_time = datetime.today().strftime('Created at %H:%M:%S - %b, %d %Y')
+    def __cmd_init(self, _interactive=False, _pversion=False, _commands=None):
+        created_time = datetime.today().strftime('%H:%M:%S - %b, %d %Y')
+        print '[+] : Created at {0}'.format(created_time)
+        print '[+] : Installed packages {0}'.format(0)
+        print '[+] : Updates at the working directory {0}'.format(0)
         packages = []
+
         if _interactive:
-            print '[+] : {0}'.format(created_time)
-            print '[+] : Installed packages {0}'.format(0)
-            print '[+] : Updates at the working directory {0}'.format(0)
+
             print
             want_more = 'Y'
             while want_more in ('y', 'Y'):
                 repository = raw_input("Offer your package name: ")
-                #print repository
+
+                if repository in ('q', 'quit', 'exit'):
+                    break
+
                 print
                 cmd_browser = cli_browser.cli_browser()
                 cmd_browser.setRequestedURL("https://github.com/search?q={0}&type=Repositories&ref=searchresults".format(repository))
@@ -50,10 +57,13 @@ class cmd_line(object):
                     package_number = -1
                     while package_number < 0 or package_number > length:
                         try:
-                            input = raw_input("Choose your package number (DEFAULT: 1): ")
-                            package_number = int(input)
+                            _input = raw_input("Choose your package number (DEFAULT: 1, 0: to ignore): ")
+                            package_number = int(_input)
                         except ValueError:
                             package_number = 1
+
+                    if package_number == 0:
+                        continue
 
                     package_name = repos_list[(package_number-1)][0][1:]
                     package_version = '*'
@@ -62,13 +72,16 @@ class cmd_line(object):
                         cmd_browser.setRequestedURL('https://github.com/{0}/tags'.format(package_name))
                         response = cmd_browser.submit()
                         versions = cmd_browser.parseVersions(response)
-                        for vr in versions:
-                            print vr, ', ',
+                        if len(versions) > 0:
+                            for vr in versions:
+                                print vr, ', ',
 
-                        print
-                        package_version = raw_input("Choose your package number (DEFAULT: latest): ")
-                        if package_version == '':
-                            package_version = versions[0]
+                            print
+                            package_version = raw_input("Choose your package number (DEFAULT: latest): ")
+                            if package_version == '':
+                                package_version = versions[0]
+                        else:
+                            print Back.RED+"There is no releases"+Back.RESET
 
                     po = {"package": package_name, "version": package_version}
                     packages.append(po)
@@ -83,8 +96,15 @@ class cmd_line(object):
 
                 cmd_browser.closeConnections()
 
-            d.pretty_print(packages)
+        else:
+            _packages = _commands[1:]
+            for pkg in _packages:
+                dtls = pkg.split(':')
+                packages.append({"package": dtls[0], "version": dtls[1]})
 
+        print
+        #d.pretty_print(packages)
+        self.__setup_workspace(packages, {"created_at": created_time, "installed_packages": [], "workspace_updates": []})
 
     def __cmd_create(self):
         print
@@ -131,6 +151,15 @@ class cmd_line(object):
         self.__parser.add_argument("-j", "--json", help="Output consumable JSON", action="store_true")
         self.__parser.add_argument("-i", "--interactive", help="Makes various commands work interactively", action="store_true")
         self.__parser.add_argument("-p", "--pversion", help="Tells if you want to get specific version of packages", action="store_true")
+        self.__parser.add_argument("-s", "--surf", help="Tells if you want to get specific version of packages", action="store_true")
+
+    def __setup_workspace(self, _packages, _settings):
+        op.create_directory('.hook')
+        op.create_file('.hook/workspace_settings.json', op.object_to_json(_settings))
+        op.hide_directory('.hook')
+        op.generate_json_file("hook.json", _packages)
+        print "Initialized empty HooK workspace in {0}".format(op.get_current_path())
+        print "Generating hook.json ..."
 
     def __parseArguments(self):
         return self.__parser.parse_args()
@@ -148,7 +177,8 @@ class cmd_line(object):
         try:
             commands = args.commands
             if commands[0] == 'init':
-                self.__cmd_init(args.interactive, args.pversion)
+                self.__cmd_init(args.interactive, args.pversion, commands)
+
             elif commands[0] == 'create':
                 print 'create =>'
             elif commands[0] == 'install':

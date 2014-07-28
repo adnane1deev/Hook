@@ -90,7 +90,7 @@ class download_manager(object):
 """
     Testing if it functions as required
 """
-
+"""
 urls = ["https://github.com/bower/registry/archive/master.zip",
         "https://github.com/bower/bower/archive/master.zip",
         "https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip"]
@@ -103,3 +103,4 @@ downloadManager.startQueue(urls)
 
 browserConnection.close()
 browserObject.closeConnections()
+"""
