@@ -3,7 +3,8 @@ __author__ = 'Adnane Deev'
 import types
 import pprint as pn
 from cli_browser import cli_browser
-
+import hook_system_variables as hook
+import os_operations as op
 
 class idm_exception(Exception):
     def __init__(self, value):
@@ -30,8 +31,17 @@ class download_manager(object):
     def addURL(self, _url):
         self.__URLS.append(_url)
 
+    def is_in_cache(self, _pkg):
+        cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+_pkg
+        if op.is_exits(cache_path):
+            return True
+
+        return False
+
     def __download(self, _url):
         file_size = None
+        path = op.get_home()+'/'+hook.data_storage_path+'/'
+        down = True
         file_name = ""
         http_connection = None
         file_handler = None
@@ -39,17 +49,26 @@ class download_manager(object):
         while file_size is None:
             http_connection = self.__browser.open(_url)
             metadata = http_connection.info()
-            print pn.pprint(metadata.dict, indent="2")
-            file_name = _url.split('/')[-4]+"-"+_url.split('/')[-3]+"."+self.__types[metadata.getheaders("content-type")[0]]
-            file_handler = open(file_name, 'wb')
-            #print metadata.getheaders("Content-Type")
-            #print metadata.dict
+            file_name = metadata.dict['content-disposition'].split('=')[1]
+
             try:
                 file_size = int(metadata.getheaders("Content-Length")[0])
             except Exception:
-                print "Couldn't resolve the URL: trying again ..."
+                #print "Couldn't resolve the URL: trying again ..."
+                pass
+
+            down = self.load_from_cache(path, file_name, file_size)
+
+            if not down:
+                break
+
+            file_handler = open(path+file_name, 'wb')
+
+        if not down:
+            return
 
         print "Downloading: %s Bytes: %s" % (file_name, file_size)
+
 
         file_size_dl = 0
         block_sz = 8192
@@ -68,19 +87,34 @@ class download_manager(object):
         file_handler.close()
         print
 
+        op.decompress_zipfile(path+file_name, './components')
+
+    def load_from_cache(self, path, file_name, file_size):
+        if self.is_in_cache(file_name):
+            op.decompress_zipfile(path+file_name, './components')
+            print "Downloading: %s Bytes: %s" % (file_name, file_size)
+
+            status = r"%10d  [%s]" % (file_size,  'Loaded from the cache')
+            #status = r"{0}  [{1}]".format('', 'Loaded from the cache')
+            print status
+
+            return False
+
+        return True
+
     def startQueue(self, _url_s):
         try:
             if isinstance(_url_s, types.ListType):
-                print 'list'
+                #print 'list'
                 for url in _url_s:
                     self.__download(url)
 
             elif isinstance(_url_s, types.StringType):
-                print 'str'
+                #print 'str'
                 self.__download(_url_s)
 
             else:
-                raise idm_exception('sss')
+                raise idm_exception('start queue exception')
         except idm_exception as e:
             print e.value
 
