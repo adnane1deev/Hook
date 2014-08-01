@@ -2,14 +2,39 @@ from colorama import Fore
 
 application_logo = Fore.GREEN+'''
 
-      _/    _/                      _/    _/
-     _/    _/    _/_/      _/_/    _/  _/
-    _/_/_/_/  _/    _/  _/    _/  _/_/
-   _/    _/  _/    _/  _/    _/  _/  _/
-  _/    _/    _/_/      _/_/    _/    _/
+                                                `@@@@@@@@ `
+                                               ` @@@@@@@,`
+                                                 @@@@@@@`
+                                                ` @@@@@@  `
+                                               `   @@@+  `
+      _/    _/                      _/    _/      ` @@  `
+     _/    _/    _/_/      _/_/    _/  _/        `  `+@:
+    _/_/_/_/  _/    _/  _/    _/  _/_/          `  `  `@` `
+   _/    _/  _/    _/  _/    _/  _/  _/        ` :`  ` @@`
+  _/    _/    _/_/      _/_/    _/    _/         `@ `  @@
+                                                ` @@   @` `
+                                               `  `#@@@' `
 
 '''+Fore.RESET
 
+"""
+application_logo = ""
+
+  `@@@@@@@@ `
+ ` @@@@@@@,`
+   @@@@@@@`
+  ` @@@@@@  `
+ `   @@@+  `
+    ` @@  `
+   `  `+@:
+  `  `  `@` `
+ ` :`  ` @@`
+   `@ `  @@
+  ` @@   @` `
+ `  `#@@@' `
+
+""
+"""
 application_name = 'Hook'
 application_description = 'Hook for the entire web workflow'
 additional_description = ' Working on new features coming out soon '
