@@ -1,4 +1,7 @@
 test
 .idea
 *.pyc
-
+*.log
+*.bak
+*bak*
+*.html
