@@ -40,12 +40,12 @@ class debugger_(object):
         """
         Level 	    Numeric value
         =========================
-        CRITICAL 	50
-        ERROR 	    40
-        WARNING 	30
-        INFO 	    20
-        DEBUG 	    10
-        NOTSET 	    0
+        CRITICAL    50
+        ERROR       40
+        WARNING     30
+        INFO        20
+        DEBUG       10
+        NOTSET      0
         """
         self.logger.log(50, _message)
 
