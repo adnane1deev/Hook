@@ -10,7 +10,9 @@ from HTMLParser import HTMLParser
 from datetime import datetime
 import os_operations as op
 import cli_download_manager as idm
-
+import package_manager as manager
+import os
+import helper_functions as helper
 
 class cmd_line(object):
 
@@ -169,7 +171,7 @@ class cmd_line(object):
         print
 
     def __cmd_list(self):
-        print
+        manager.get_list_of_installed_packages()
 
     def __cmd_update(self):
         print
@@ -178,7 +180,29 @@ class cmd_line(object):
         print
 
     def __cmd_profile(self):
-        print
+        if not op.is_exits('.hook/workspace_settings.json'):
+            manager.settings_not_found_error_print()
+            return
+
+        if not op.is_exits("hook.json"):
+            print "You're not in the working directory. Switch to the working directory and try again"
+            return
+
+        settings = helper.load_json_file('.hook/workspace_settings.json')
+
+        print Back.BLUE + " Workspace: " + Back.RESET + " %0.2f MB\n" % op.get_folder_size(os.getcwd())['mb']
+        print "\t" + Fore.BLUE + "Created at:" + Fore.RESET + " {0}\n".format(settings['created_at'])
+
+        print Back.BLUE + " Components: " + Back.RESET + " %0.1f MB\n" % op.get_folder_size('components')['mb']
+
+        components = os.listdir('components')
+        print "\t" + Fore.BLUE+"{0:32}{1:14}{2:14}\n".format("Name", "Size/(mb)", "Size/(kb)")+Fore.RESET
+
+        for item in components:
+            size = op.get_folder_size('components/' + item)
+            print "\t" + "{0:32}{1:14}{2:14}".format(item, ("%0.2f" % size['mb']), ("%d" % size['kb']))
+
+
 
     def __cmd_home(self):
         print
@@ -188,6 +212,7 @@ class cmd_line(object):
 
     def __initCommands(self):
         self.__parser.add_argument('commands', nargs="*")
+        self.__parser.add_argument('self-install', help="Setup working environment of hook it self", nargs="?")
         self.__parser.add_argument('init', help="Interactively create a hook.json file", nargs="?")
         self.__parser.add_argument('create', help="Setting up environment for the project", nargs="*")
         self.__parser.add_argument("install", help="Install a package(s) locally", nargs="*")
@@ -257,13 +282,15 @@ class cmd_line(object):
             elif commands[0] == 'search':
                 print 'search =>'
             elif commands[0] == 'list':
-                print 'list =>'
+                self.__cmd_list()
+
             elif commands[0] == 'update':
                 print 'update =>'
             elif commands[0] == 'uninstall':
                 print 'uninstall =>'
             elif commands[0] == 'profile':
-                print 'profile =>'
+                self.__cmd_profile()
+
             elif commands[0] == 'home':
                 print 'home =>'
             elif commands[0] == 'cache':

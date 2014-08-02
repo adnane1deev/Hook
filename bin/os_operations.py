@@ -142,6 +142,21 @@ def decompress_zipfile(_filename, _to_path):
         print e.message
 
 
+def get_folder_size(_path="."):
+    if not is_exits(_path):
+        return
+
+    folder = _path
+    folder_size = 0
+
+    for (path, dirs, files) in os.walk(folder):
+        for _file in files:
+            filename = os.path.join(path, _file)
+            folder_size += os.path.getsize(filename)
+
+    return {'mb': (folder_size/(1024*1024.0)), 'kb': (folder_size/1024.0)}
+
+
 if define_operation_system() == 'windows':
     from ctypes import WinError
 
