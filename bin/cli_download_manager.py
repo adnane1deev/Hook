@@ -1,8 +1,9 @@
 __author__ = 'Adnane Deev'
 
 import types
-import pprint as pn
-from cli_browser import cli_browser
+import hook_system_variables as hook
+import os_operations as op
+import package_manager as manager
 
 
 class idm_exception(Exception):
@@ -30,25 +31,34 @@ class download_manager(object):
     def addURL(self, _url):
         self.__URLS.append(_url)
 
-    def __download(self, _url):
-        file_size = None
-        file_name = ""
-        http_connection = None
-        file_handler = None
+    def is_in_cache(self, _pkg):
+        cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+_pkg
+        if op.is_exits(cache_path):
+            return True
 
+        return False
+
+    def __download(self, _url, _name_size):
+        http_connection = self.__browser.open(_url)
+        file_size = _name_size['file_size']
+        file_name = _name_size['file_name']
+        path = op.get_home()+'/'+hook.data_storage_path+'/'
+
+        """
         while file_size is None:
-            http_connection = self.__browser.open(_url)
+
             metadata = http_connection.info()
-            print pn.pprint(metadata.dict, indent="2")
-            file_name = _url.split('/')[-4]+"-"+_url.split('/')[-3]+"."+self.__types[metadata.getheaders("content-type")[0]]
-            file_handler = open(file_name, 'wb')
-            #print metadata.getheaders("Content-Type")
-            #print metadata.dict
+            file_name = metadata.dict['content-disposition'].split('=')[1]
+
             try:
                 file_size = int(metadata.getheaders("Content-Length")[0])
             except Exception:
-                print "Couldn't resolve the URL: trying again ..."
+                #print "Couldn't resolve the URL: trying again ..."
+                pass
+        """
 
+        file_handler = open(path+file_name, 'wb')
+        print
         print "Downloading: %s Bytes: %s" % (file_name, file_size)
 
         file_size_dl = 0
@@ -68,19 +78,67 @@ class download_manager(object):
         file_handler.close()
         print
 
+        op.decompress_zipfile(path+file_name, './components')
+
+    def load_from_cache(self, file_name, file_size):
+        if self.is_in_cache(file_name):
+            cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+file_name
+
+            op.decompress_zipfile(cache_path, './components')
+            print
+            print "Downloading: %s Bytes: %s" % (file_name, file_size)
+
+            status = r"%10d  [%s]" % (file_size,  'Loaded from the cache')
+            print status
+
+            return False
+
+        return True
+
+    def __get_package_name(self, _url):
+        file_size = None
+        file_name = ""
+
+        while True:
+            http_connection = self.__browser.open(_url)
+            metadata = http_connection.info()
+            file_name = metadata.dict['content-disposition'].split('=')[1]
+
+            try:
+                file_size = int(metadata.getheaders("Content-Length")[0])
+                break
+            except Exception:
+                #print "Couldn't resolve the URL: trying again ..."
+                pass
+
+        return {'file_name': file_name, 'no_ext_name': file_name.split('.')[0], 'file_size': file_size}
+
+    def __get_file(self, _url):
+        pkg_name_size = self.__get_package_name(_url)
+
+        if manager.is_package_registered(pkg_name_size['file_name']):
+            print "{0} is already installed".format(pkg_name_size['file_name'])
+
+        elif manager.is_in_cache(pkg_name_size['file_name']):
+            self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])
+            manager.register_installed_package(pkg_name_size['file_name'])
+        else:
+            self.__download(_url, pkg_name_size)
+            manager.register_installed_package(pkg_name_size['file_name'])
+
     def startQueue(self, _url_s):
         try:
             if isinstance(_url_s, types.ListType):
-                print 'list'
+                #print 'list'
                 for url in _url_s:
-                    self.__download(url)
+                    self.__get_file(url)
 
             elif isinstance(_url_s, types.StringType):
-                print 'str'
-                self.__download(_url_s)
+                #print 'str'
+                self.__get_file(_url_s)
 
             else:
-                raise idm_exception('sss')
+                raise idm_exception('start queue exception')
         except idm_exception as e:
             print e.value
 

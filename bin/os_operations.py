@@ -57,9 +57,20 @@ def hide_file(_path):
             print e.message
 
 
+def show_file(_path):
+    if __check_environment(_path):
+        try:
+            __show(_path)
+        except Exception as e:
+            print e.message
+
+
 def hide_directory(_path):
     hide_file(_path)
 
+
+def show_directory(_path):
+    show_file(_path)
 
 def __hide(_name):
     FILE_ATTRIBUTE_HIDDEN = 0x02
@@ -104,8 +115,20 @@ def generate_json_file(_filename, _pkg_list):
     create_file(_filename, content)
 
 
+def siparator():
+    if define_operation_system() == 'windows':
+        return '\\'
+
+    return '/'
+
+
+
 def create_tree(_tree):
     os.makedirs(_tree)
+
+
+def is_exits(_path):
+    return os.path.exists(_path)
 
 
 def decompress_zipfile(_filename, _to_path):
