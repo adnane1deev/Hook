@@ -3,12 +3,13 @@ __author__ = 'Adnane deev'
 import re
 import argparse
 import cli_browser
-import helper_functions as d
+import helper_functions as helpers
 import hook_system_variables as hook
 from colorama import init, Fore, Back
 from HTMLParser import HTMLParser
 from datetime import datetime
 import os_operations as op
+import cli_download_manager as idm
 
 
 class cmd_line(object):
@@ -110,7 +111,59 @@ class cmd_line(object):
         print
 
     def __cmd_install(self):
-        print
+        browser_object = cli_browser.cli_browser()
+        browser_connection = browser_object.getHttpConnection()
+        download_manager = idm.download_manager()
+        download_manager.plugInBrowserWithDownloadManager(browser_connection)
+
+        list = helpers.load_json_file('hook.json')['require']
+        #helpers.prettify(list)
+
+        urls = []
+
+        for pkg in list:
+            name = pkg['package']
+            version = ''
+
+            if pkg['version'] == '*':
+                browser_object.setRequestedURL('https://github.com/{0}/tags'.format(name))
+                response = browser_object.submit()
+                versions_list = browser_object.parseVersions(response)
+
+                if len(versions_list) == 0:
+                    print Back.RED+'No releases for {0}'.format(name)+Back.RESET
+                    version = 'master'
+
+                else:
+                    version = versions_list[0]
+
+            else:
+                version = pkg['version']
+
+            #version = 'master' if pkg['version'] == '*' else pkg['version']
+
+
+            #url = 'https://github.com/fabpot/Twig/archive/v1.16.0.zip'
+            url = 'https://github.com/{0}/archive/{1}.zip'.format(name, version)
+            #print url
+            urls.append(url)
+
+        download_manager.startQueue(urls)
+
+        browser_connection.close()
+        browser_object.closeConnections()
+
+        """
+        urls = ["https://github.com/bower/registry/archive/master.zip",
+        "https://github.com/bower/bower/archive/master.zip",
+        "https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip"]
+
+
+        download_manager.startQueue(urls)
+
+        browser_connection.close()
+        browser_object.closeConnections()
+        """
 
     def __cmd_search(self):
         print
@@ -151,15 +204,28 @@ class cmd_line(object):
         self.__parser.add_argument("-j", "--json", help="Output consumable JSON", action="store_true")
         self.__parser.add_argument("-i", "--interactive", help="Makes various commands work interactively", action="store_true")
         self.__parser.add_argument("-p", "--pversion", help="Tells if you want to get specific version of packages", action="store_true")
-        self.__parser.add_argument("-s", "--surf", help="Tells if you want to get specific version of packages", action="store_true")
+        self.__parser.add_argument("-s", "--surf", help="Allows you to paginate between packages", action="store_true")
 
     def __setup_workspace(self, _packages, _settings):
         op.create_directory('.hook')
         op.create_file('.hook/workspace_settings.json', op.object_to_json(_settings))
-        op.hide_directory('.hook')
+        #op.hide_directory('.hook')
+        op.show_directory('.hook')
+        op.create_directory('components')
         op.generate_json_file("hook.json", _packages)
         print "Initialized empty HooK workspace in {0}".format(op.get_current_path())
         print "Generating hook.json ..."
+
+    def __is_workspace_setup(self):
+        hook_exists = op.is_exits('.hook')
+        workspace_settings_exists = op.is_exits('.hook/workspace_settings.json')
+        components_exists = op.is_exits('components')
+        hook_json = op.is_exits('hook.json')
+
+        if hook_exists and workspace_settings_exists and components_exists and hook_json:
+            return True
+
+        return False
 
     def __parseArguments(self):
         return self.__parser.parse_args()
@@ -177,12 +243,17 @@ class cmd_line(object):
         try:
             commands = args.commands
             if commands[0] == 'init':
-                self.__cmd_init(args.interactive, args.pversion, commands)
+                if not self.__is_workspace_setup():
+                    self.__cmd_init(args.interactive, args.pversion, commands)
+
+                else:
+                    print "Workspace already setup"
 
             elif commands[0] == 'create':
                 print 'create =>'
             elif commands[0] == 'install':
-                print 'install =>'
+                self.__cmd_install()
+
             elif commands[0] == 'search':
                 print 'search =>'
             elif commands[0] == 'list':

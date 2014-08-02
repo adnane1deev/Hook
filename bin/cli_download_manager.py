@@ -58,7 +58,7 @@ class download_manager(object):
         """
 
         file_handler = open(path+file_name, 'wb')
-
+        print
         print "Downloading: %s Bytes: %s" % (file_name, file_size)
 
         file_size_dl = 0
@@ -79,18 +79,17 @@ class download_manager(object):
         print
 
         op.decompress_zipfile(path+file_name, './components')
-        print
 
     def load_from_cache(self, file_name, file_size):
         if self.is_in_cache(file_name):
             cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+file_name
 
             op.decompress_zipfile(cache_path, './components')
+            print
             print "Downloading: %s Bytes: %s" % (file_name, file_size)
 
             status = r"%10d  [%s]" % (file_size,  'Loaded from the cache')
             print status
-            print
 
             return False
 
