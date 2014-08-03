@@ -1,4 +1,5 @@
-__author__ = 'Adnane Deev'
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import re
 import urllib2
@@ -100,20 +101,3 @@ class cli_browser(object):
     """
     def closeConnections(self):
         self.__cli_browser_opener.close()
-
-#https://github.com/angular/angular.js/tags
-"""
-browser = cli_browser()
-browser.setRequestedURL('https://github.com/dsel/dsel.github.io/tags')
-response = browser.submit()
-
-v = browser.getPackageVersions(response)
-browser.closeConnections()
-import pprint
-print pprint.pprint(v, indent=4)
-print len(v)
-"""
-"""
-hn = open('test.html', "w")
-hn.write(response)
-hn.close()"""

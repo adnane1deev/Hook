@@ -1,4 +1,5 @@
-__author__ = 'Adnane deev'
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import re
 import argparse
@@ -14,15 +15,16 @@ import package_manager as manager
 import os
 import helper_functions as helper
 
+
 class cmd_line(object):
 
     def __init__(self):
         self.__parser = argparse.ArgumentParser(
             prog=hook.application_name,
-            description=Fore.GREEN+hook.application_description+Fore.RESET,
-            epilog=Back.BLUE+hook.additional_description+Back.RESET,
+            description=Fore.GREEN + hook.application_description + Fore.RESET,
+            epilog=Back.BLUE + hook.additional_description + Back.RESET,
             usage=hook.usage_syntax,
-            version=Fore.YELLOW+hook.application_name+hook.application_version+Fore.RESET,
+            version=Fore.YELLOW + hook.application_name + ' ' + hook.application_version + Fore.RESET,
             conflict_handler='resolve'
         )
 
@@ -155,18 +157,6 @@ class cmd_line(object):
         browser_connection.close()
         browser_object.closeConnections()
 
-        """
-        urls = ["https://github.com/bower/registry/archive/master.zip",
-        "https://github.com/bower/bower/archive/master.zip",
-        "https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip"]
-
-
-        download_manager.startQueue(urls)
-
-        browser_connection.close()
-        browser_object.closeConnections()
-        """
-
     def __cmd_search(self):
         print
 
@@ -260,14 +250,20 @@ class cmd_line(object):
         self.__initOptions()
         return self.__parseArguments()
 
-    def logoPrint(self):
+    def logoPrint(self, _logo=''):
         init()
-        print hook.application_logo
+        if _logo == 'init':
+            print hook.application_logo
+            return
+
+        print
 
     def execute(self, args):
         try:
             commands = args.commands
+            self.logoPrint(commands[0])
             if commands[0] == 'init':
+
                 if not self.__is_workspace_setup():
                     self.__cmd_init(args.interactive, args.pversion, commands)
 
@@ -299,12 +295,5 @@ class cmd_line(object):
                 self.__parser.print_help()
 
         except IndexError as ex:
-            print Back.RED, 'No command was specified (-_-)', Back.RESET, "\n"
+            print "\n" + Back.RED, 'No command was specified (-_-)', Back.RESET, ""
             self.__parser.print_help()
-
-"""
-cmmd = cmd_line()
-cmmd.logoPrint()
-args = cmmd.initializeCommandLineTool()
-cmmd.execute(args)
-"""

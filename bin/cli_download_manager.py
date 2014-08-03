@@ -1,4 +1,5 @@
-__author__ = 'Adnane Deev'
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import types
 import hook_system_variables as hook
@@ -43,19 +44,6 @@ class download_manager(object):
         file_size = _name_size['file_size']
         file_name = _name_size['file_name']
         path = op.get_home()+'/'+hook.data_storage_path+'/'
-
-        """
-        while file_size is None:
-
-            metadata = http_connection.info()
-            file_name = metadata.dict['content-disposition'].split('=')[1]
-
-            try:
-                file_size = int(metadata.getheaders("Content-Length")[0])
-            except Exception:
-                #print "Couldn't resolve the URL: trying again ..."
-                pass
-        """
 
         file_handler = open(path+file_name, 'wb')
         print
@@ -144,21 +132,3 @@ class download_manager(object):
 
     def plugInBrowserWithDownloadManager(self, _browser):
         self.__browser = _browser
-
-"""
-    Testing if it functions as required
-"""
-"""
-urls = ["https://github.com/bower/registry/archive/master.zip",
-        "https://github.com/bower/bower/archive/master.zip",
-        "https://github.com/zendframework/ZendSkeletonApplication/archive/master.zip"]
-
-browserObject = cli_browser()
-browserConnection = browserObject.getHttpConnection()
-downloadManager = download_manager()
-downloadManager.plugInBrowserWithDownloadManager(browserConnection)
-downloadManager.startQueue(urls)
-
-browserConnection.close()
-browserObject.closeConnections()
-"""

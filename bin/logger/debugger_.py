@@ -1,4 +1,5 @@
-__author__ = 'Adnane Deev'
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import logging
 

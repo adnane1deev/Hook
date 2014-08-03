@@ -1,5 +1,5 @@
-__author__ = 'Asus'
-# http://stackoverflow.com/questions/19622133/python-set-hide-attribute-on-folders-in-windows-os
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -159,22 +159,3 @@ def get_folder_size(_path="."):
 
 if define_operation_system() == 'windows':
     from ctypes import WinError
-
-"""
-    os.path
-"""
-"""
-print os.path.isfile("E:\Formations\exemples")
-print os.path.isfile("E:\Formations\exemples\exemple.html")
-print os.path.split("E:\Formations\exemples\exemple.html")
-
-
-print os.name
-print sys.platform
-
-print re.search(r'win', 'sdsin32ds', re.IGNORECASE)
-if not os.path.exists(".hook"):
-    print "eeee"
-"""
-
-#print __get_home()
