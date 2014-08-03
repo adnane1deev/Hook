@@ -14,6 +14,7 @@ import cli_download_manager as idm
 import package_manager as manager
 import os
 import helper_functions as helper
+import app_setup as app
 
 
 class cmd_line(object):
@@ -110,6 +111,9 @@ class cmd_line(object):
         print
         #d.pretty_print(packages)
         self.__setup_workspace(packages, {"created_at": created_time, "installed_packages": [], "workspace_updates": []})
+
+    def __cmd_self_install(self):
+        app.setup()
 
     def __cmd_create(self):
         print
@@ -219,7 +223,7 @@ class cmd_line(object):
         self.__parser.add_argument("-j", "--json", help="Output consumable JSON", action="store_true")
         self.__parser.add_argument("-i", "--interactive", help="Makes various commands work interactively", action="store_true")
         self.__parser.add_argument("-p", "--pversion", help="Tells if you want to get specific version of packages", action="store_true")
-        self.__parser.add_argument("-s", "--surf", help="Allows you to paginate between packages", action="store_true")
+        self.__parser.add_argument("-s", "--surf", help="Allows you to paginate packages list", action="store_true")
 
     def __setup_workspace(self, _packages, _settings):
         op.create_directory('.hook')
@@ -250,6 +254,7 @@ class cmd_line(object):
         self.__initOptions()
         return self.__parseArguments()
 
+
     def logoPrint(self, _logo=''):
         init()
         if _logo == 'init':
@@ -269,6 +274,9 @@ class cmd_line(object):
 
                 else:
                     print "Workspace already setup"
+
+            elif commands[0] == 'self-install':
+                self.__cmd_self_install()
 
             elif commands[0] == 'create':
                 print 'create =>'
