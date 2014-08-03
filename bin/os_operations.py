@@ -9,6 +9,7 @@ import ctypes
 import distutils.dir_util as dir_util
 from os.path import expanduser
 from zipfile import *
+from Tkinter import Tk
 
 
 def define_operation_system():
@@ -155,6 +156,14 @@ def get_folder_size(_path="."):
             folder_size += os.path.getsize(filename)
 
     return {'mb': (folder_size/(1024*1024.0)), 'kb': (folder_size/1024.0)}
+
+
+def copy_to_clipboard(_str):
+    tk = Tk()
+    tk.withdraw()
+    tk.clipboard_clear()
+    tk.clipboard_append(_str)
+    tk.destroy()
 
 
 if define_operation_system() == 'windows':
