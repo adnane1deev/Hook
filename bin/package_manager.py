@@ -50,14 +50,18 @@ def is_in_cache(_pkg):
     return False
 
 
+def get_installed_packages():
+    settings = helper.load_json_file('.hook/workspace_settings.json')
+    return settings['installed_packages']
+
+
 def get_list_of_installed_packages():
     if not op.is_exits('.hook/workspace_settings.json'):
         settings_not_found_error_print()
 
         return
 
-    settings = helper.load_json_file('.hook/workspace_settings.json')
-    installed = settings['installed_packages']
+    installed = get_installed_packages()
 
     try:
         print Fore.BLUE+"{0:28}{1:28}{2:28}".format("Installed at", "Name", "Version")+Fore.RESET

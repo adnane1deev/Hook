@@ -9,7 +9,10 @@ import ctypes
 import distutils.dir_util as dir_util
 from os.path import expanduser
 from zipfile import *
-from Tkinter import Tk
+try:
+    from Tkinter import Tk
+except ImportError:
+    pass
 
 
 def define_operation_system():

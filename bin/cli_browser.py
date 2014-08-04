@@ -4,6 +4,16 @@
 import re
 import urllib2
 import cookielib
+import os_operations as op
+import sys
+
+
+def robot():
+    return """
+     [00]
+    /|__|\\
+      ''
+    """
 
 
 class cli_browser(object):
@@ -20,6 +30,7 @@ class cli_browser(object):
         self.__requestedURL = None
         self.__pagination = False
         self.__responseContent = None
+        self.__bots_verified = True
 
     def getHttpConnection(self):
         return self.__cli_browser_opener
@@ -43,19 +54,37 @@ class cli_browser(object):
             try:
                 response = self.__cli_browser_opener.open(self.__requestedURL)
                 self.__responseContent = response.read()
+                self.__bots_verified = True
                 return self.__responseContent
             except urllib2.URLError as e:
+                if self.__bots_verified:
+                    print robot()
+
+                self.__bots_verified = False
+
                 if attempts < 10:
                     attempts += 1
-                    print ".",
-                else:
-                    print e.errno, ' ', e.filename, ' ', e.message, ' ', e.reason, ' ', e.strerror
 
-        print
+                    status = "\r\tChecking for bots %s" % (self.gen(attempts))
+                    #print status,
+                    sys.stdout.write(status)
+                    sys.stdout.flush()
+
+                else:
+                    print e.errno, ' ', e.filename, ' ', e.message, ' ', e.strerror
+
+        #print
+        return None
+
+    def gen(self, t):
+        m = 10 - t
+        str = '[{0}{1}]'.format(("#" * t), ("-" * m))
+        return str
 
     def parseResponse(self, _response):
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*<p.+\n*\s*(.+?)\n
+        op.create_file("shit.html", _response)
         repositories = re.findall(r'<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*(<p\sclass="description css-truncate-target">\n\s*(.+?)\n|)', _response, re.IGNORECASE)
         return repositories
 
@@ -69,12 +98,14 @@ class cli_browser(object):
 
         return None
 
-    def getCurrentPage(self):
+    def getCurrentPage(self, _res=None):
         try:
-            currentPage = re.search(r'class="current">(.?)<', self.__responseContent, re.IGNORECASE).group(1)
+            if _res is None:
+                _res = self.__responseContent
+            currentPage = re.search(r'class="current">(.+?)<', _res, re.IGNORECASE).group(1)
             return currentPage
         except AttributeError as e:
-            return None
+            return 1
 
     def enablePagination(self, _decision):
         self.__pagination = _decision

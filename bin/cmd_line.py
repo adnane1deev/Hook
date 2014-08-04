@@ -171,8 +171,19 @@ class cmd_line(object):
             prompt_message = "Choose your package number (1: DEFAULT): "
             repository = _package[0]
             cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
-            response = cmd_browser.submit()
+            response = ''
+            while True:
+                response = cmd_browser.submit()
+                if response is not None:
+                    print "\n"
+                    break
+
+                #cmd_browser.closeConnections()
+                #cmd_browser = cli_browser.cli_browser()
+
+                #cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
             repos_list = cmd_browser.parseResponse(response)
+
 
             parser = HTMLParser()
             length = len(repos_list)
@@ -183,18 +194,22 @@ class cmd_line(object):
             if length > 0:
                 if _surfing:
                     print
-                    current = cmd_browser.getCurrentPage()
+                    current = cmd_browser.getCurrentPage(response)
                     print "Current page: {0}".format(current)
                     print "Available pages: ",
                     pages = cmd_browser.parsePagination(response)
 
-                    if av_pages == -1:
+                    if av_pages == -1 and pages is not None:
+                        #print pages[-1]
+                        #print pages
                         av_pages = int(pages[-1])
-
-                    if pages is not None:
+                    #if pages is not None:
                         print av_pages,
                     else:
-                        print None
+                        if av_pages == -1:
+                            av_pages = 1
+                        print av_pages if av_pages != -1 else 1
+
                     prompt_message = "Choose your (package number/action) (1: DEFAULT, p: PREVIOUS, n: NEXT, r: RESET, q: QUIT): "
 
                 print
@@ -205,6 +220,7 @@ class cmd_line(object):
                     _input = raw_input(prompt_message)
                     package_number = int(_input)
                 except ValueError:
+                    #print av_pages
                     if _surfing and _input in ('p', 'n', 'r', 'q') and 0 < int(current) <= av_pages:
                         print
                         if _input == 'p':
@@ -247,8 +263,9 @@ class cmd_line(object):
                 cmd_browser.setRequestedURL('https://github.com/{0}/tags'.format(package_name))
                 response = cmd_browser.submit()
                 versions = cmd_browser.parseVersions(response)
+                print "\n" + Back.BLUE + package_name + Back.RESET + " versions" + "\n"
                 if len(versions) > 0:
-                    print "\n" + Back.BLUE + package_name + Back.RESET + " versions" + "\n"
+
                     for vr in versions:
                         print vr, ', ',
 
@@ -268,8 +285,8 @@ class cmd_line(object):
     def __cmd_update(self):
         print
 
-    def __cmd_uninstall(self):
-        print
+    def __cmd_uninstall(self, _packages):
+        print helper.prettify(manager.get_installed_packages())
 
     def __cmd_profile(self):
         if not op.is_exits('.hook/workspace_settings.json'):
@@ -293,7 +310,6 @@ class cmd_line(object):
         for item in components:
             size = op.get_folder_size('components/' + item)
             print "\t" + "{0:32}{1:14}{2:14}".format(item, ("%0.2f" % size['mb']), ("%d" % size['kb']))
-
 
 
     def __cmd_home(self):
@@ -389,7 +405,13 @@ class cmd_line(object):
             elif commands[0] == 'update':
                 print 'update =>'
             elif commands[0] == 'uninstall':
-                print 'uninstall =>'
+
+                if not self.__is_workspace_setup():
+                    manager.settings_not_found_error_print()
+
+                    return
+                self.__cmd_uninstall(commands[1:])
+
             elif commands[0] == 'profile':
                 self.__cmd_profile()
 
@@ -401,5 +423,5 @@ class cmd_line(object):
                 self.__parser.print_help()
 
         except IndexError as ex:
-            print "\n" + Back.RED, 'Not enough arguments', Back.RESET, ""
+            print "\n" + Back.RED + Fore.WHITE + ' Not enough arguments ' + Fore.RESET + Back.RESET
             self.__parser.print_help()
