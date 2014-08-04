@@ -63,7 +63,7 @@ class cmd_line(object):
                     package_number = -1
                     while package_number < 0 or package_number > length:
                         try:
-                            _input = raw_input("Choose your package number (DEFAULT: 1, 0: to ignore): ")
+                            _input = raw_input("Choose your package number (1: DEFAULT, 0: IGNORE): ")
                             package_number = int(_input)
                         except ValueError:
                             package_number = 1
@@ -83,7 +83,7 @@ class cmd_line(object):
                                 print vr, ', ',
 
                             print
-                            package_version = raw_input("Choose your package number (DEFAULT: latest): ")
+                            package_version = raw_input("Choose your package number (latest: DEFAULT): ")
                             if package_version == '':
                                 package_version = versions[0]
                         else:
@@ -148,9 +148,6 @@ class cmd_line(object):
             else:
                 version = pkg['version']
 
-            #version = 'master' if pkg['version'] == '*' else pkg['version']
-
-
             #url = 'https://github.com/fabpot/Twig/archive/v1.16.0.zip'
             url = 'https://github.com/{0}/archive/{1}.zip'.format(name, version)
             #print url
@@ -195,8 +192,6 @@ class cmd_line(object):
                         av_pages = int(pages[-1])
 
                     if pages is not None:
-                        #for page in pages[:]:
-                        #    print("{0:1}".format(page)),
                         print av_pages,
                     else:
                         print None
