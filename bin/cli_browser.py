@@ -47,9 +47,11 @@ class cli_browser(object):
             except urllib2.URLError as e:
                 if attempts < 10:
                     attempts += 1
-                    print "attempting ..."
+                    print ".",
                 else:
                     print e.errno, ' ', e.filename, ' ', e.message, ' ', e.reason, ' ', e.strerror
+
+        print
 
     def parseResponse(self, _response):
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s

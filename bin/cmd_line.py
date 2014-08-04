@@ -161,8 +161,111 @@ class cmd_line(object):
         browser_connection.close()
         browser_object.closeConnections()
 
-    def __cmd_search(self):
-        print
+    def __cmd_search(self, _package, _surfing=False, _current="1", _av_pages=-1):
+        if len(_package) == 0:
+            print "No package is provided"
+            return
+
+        cmd_browser = cli_browser.cli_browser()
+
+        while True:
+            current = _current
+            av_pages = _av_pages
+            prompt_message = "Choose your package number (1: DEFAULT): "
+            repository = _package[0]
+            cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
+            response = cmd_browser.submit()
+            repos_list = cmd_browser.parseResponse(response)
+
+            parser = HTMLParser()
+            length = len(repos_list)
+            for repo_index in range(length):
+                tpl = repos_list[repo_index]
+                print parser.unescape("[{0:2}] : {1} {2}".format((repo_index+1), tpl[0][1:], '- '+re.sub(r'<em>|</em>', '', tpl[2]).strip()))
+
+            if length > 0:
+                if _surfing:
+                    print
+                    current = cmd_browser.getCurrentPage()
+                    print "Current page: {0}".format(current)
+                    print "Available pages: ",
+                    pages = cmd_browser.parsePagination(response)
+
+                    if av_pages == -1:
+                        av_pages = int(pages[-1])
+
+                    if pages is not None:
+                        #for page in pages[:]:
+                        #    print("{0:1}".format(page)),
+                        print av_pages,
+                    else:
+                        print None
+                    prompt_message = "Choose your (package number/action) (1: DEFAULT, p: PREVIOUS, n: NEXT, r: RESET, q: QUIT): "
+
+                print
+                package_number = -1
+                _input = ''
+                try:
+                    print
+                    _input = raw_input(prompt_message)
+                    package_number = int(_input)
+                except ValueError:
+                    if _surfing and _input in ('p', 'n', 'r', 'q') and 0 < int(current) <= av_pages:
+                        print
+                        if _input == 'p':
+                            _current = str(int(current)-1)
+                            _av_pages = av_pages
+                        elif _input == 'n':
+                            crnt = int(current)+1
+                            if crnt > av_pages:
+                                crnt = av_pages
+
+                            _current = str(crnt)
+                            _av_pages = av_pages
+                        elif _input == 'r':
+                            _current = '1'
+                            _av_pages = av_pages
+
+                        else:
+                            print "Hook is quitting ..."
+                            cmd_browser.closeConnections()
+                            return
+
+                        continue
+
+                    elif _input == 'q':
+                        print "Hook is quitting ..."
+                        cmd_browser.closeConnections()
+                        return
+
+                    else:
+                        package_number = 1
+
+                if package_number < 0:
+                    package_number = 1
+
+                elif package_number > length:
+                    package_number = length
+
+                package_name = repos_list[(package_number-1)][0][1:]
+
+                cmd_browser.setRequestedURL('https://github.com/{0}/tags'.format(package_name))
+                response = cmd_browser.submit()
+                versions = cmd_browser.parseVersions(response)
+                if len(versions) > 0:
+                    print "\n" + Back.BLUE + package_name + Back.RESET + " versions" + "\n"
+                    for vr in versions:
+                        print vr, ', ',
+
+                else:
+                    print Back.RED+"There is no releases"+Back.RESET
+
+            else:
+                print "There is no package named: {0}".format(repository)
+
+            break
+        cmd_browser.closeConnections()
+
 
     def __cmd_list(self):
         manager.get_list_of_installed_packages()
@@ -254,7 +357,6 @@ class cmd_line(object):
         self.__initOptions()
         return self.__parseArguments()
 
-
     def logoPrint(self, _logo=''):
         init()
         if _logo == 'init':
@@ -284,7 +386,8 @@ class cmd_line(object):
                 self.__cmd_install()
 
             elif commands[0] == 'search':
-                print 'search =>'
+                self.__cmd_search(commands[1:], args.surf)
+
             elif commands[0] == 'list':
                 self.__cmd_list()
 
@@ -303,5 +406,5 @@ class cmd_line(object):
                 self.__parser.print_help()
 
         except IndexError as ex:
-            print "\n" + Back.RED, 'No command was specified (-_-)', Back.RESET, ""
+            print "\n" + Back.RED, 'Not enough arguments', Back.RESET, ""
             self.__parser.print_help()
