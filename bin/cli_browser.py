@@ -16,6 +16,7 @@ def robot():
     """
 
 
+
 class cli_browser(object):
 
     def __init__(self):
@@ -31,6 +32,7 @@ class cli_browser(object):
         self.__pagination = False
         self.__responseContent = None
         self.__bots_verified = True
+        self.__first_round = True
 
     def getHttpConnection(self):
         return self.__cli_browser_opener
@@ -55,6 +57,10 @@ class cli_browser(object):
                 response = self.__cli_browser_opener.open(self.__requestedURL)
                 self.__responseContent = response.read()
                 self.__bots_verified = True
+                if 0 < attempts <= 10 and self.__first_round:
+                    print ""
+
+                self.__first_round = True
                 return self.__responseContent
             except urllib2.URLError as e:
                 if self.__bots_verified:
@@ -73,6 +79,8 @@ class cli_browser(object):
                 else:
                     print e.errno, ' ', e.filename, ' ', e.message, ' ', e.strerror
 
+        if attempts == 10:
+            self.__first_round = False
         #print
         return None
 
