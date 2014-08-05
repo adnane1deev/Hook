@@ -172,12 +172,15 @@ class cmd_line(object):
             repository = _package[0]
             cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
             response = ''
+            rr = ''
             while True:
                 response = cmd_browser.submit()
                 if response is not None:
-                    print "\n"
-                    break
+                    if rr == "#":
+                        print "\n"
 
+                    break
+                rr = "#"
                 #cmd_browser.closeConnections()
                 #cmd_browser = cli_browser.cli_browser()
 

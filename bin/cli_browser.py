@@ -84,7 +84,6 @@ class cli_browser(object):
     def parseResponse(self, _response):
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*<p.+\n*\s*(.+?)\n
-        op.create_file("shit.html", _response)
         repositories = re.findall(r'<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*(<p\sclass="description css-truncate-target">\n\s*(.+?)\n|)', _response, re.IGNORECASE)
         return repositories
 
