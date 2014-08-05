@@ -172,15 +172,16 @@ class cmd_line(object):
             repository = _package[0]
             cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
             response = ''
-            rr = ''
+            new_line = ''
             while True:
                 response = cmd_browser.submit()
+
                 if response is not None:
-                    if rr == "#":
-                        print "\n"
+                    if new_line == "#":
+                        print "->\n"
 
                     break
-                rr = "#"
+                new_line = "#"
                 #cmd_browser.closeConnections()
                 #cmd_browser = cli_browser.cli_browser()
 
@@ -288,8 +289,58 @@ class cmd_line(object):
     def __cmd_update(self):
         print
 
-    def __cmd_uninstall(self, _packages):
-        print helper.prettify(manager.get_installed_packages())
+    def __cmd_uninstall(self, _packages=None):
+
+        installed_list = manager.get_installed_packages()
+        length = len(installed_list)
+        _input = ''
+        if _packages is None or _packages == []:
+            try:
+                print Fore.BLUE+"{0:4}  {1:28}{2:28}{3:28}".format("Num", "Installed at", "Name", "Version")+Fore.RESET
+                print
+                for item_index in range(length):
+                    pkg = installed_list[item_index]
+                    installed_at = pkg['installed_at']
+                    name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+
+                    print "[{0:2}]  {1:28}{2:28}{3:28}".format((item_index+1), installed_at, name, version)
+
+                print
+                while True:
+                    _input = raw_input("Choose your package number (1: DEFAULT, q: QUIT): ")
+                    if _input == "":
+                        _input = 1
+
+                    package_index = int(_input)
+
+                    if 0 < package_index <= length:
+                        pkg = installed_list[package_index]
+                        name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+                        print
+                        print Back.RED + " DANGER ZONE " + Back.RESET
+
+                        while True:
+                            confirmation = raw_input("\n\t" + Fore.RED + "{0} ({1})".format(name, version) + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
+
+                            if confirmation in ('y', 'Y', 'yes'):
+                                print "Delete action on "+name
+                                break
+                            elif confirmation in ('', 'n', 'N', 'no'):
+                                print "Operation is canceled"
+                                print "Hook is quitting"
+                                break
+                        break
+
+            except ValueError:
+                if _input not in ('q', 'quit'):
+                    print "No value was specified"
+                print "Hook is quitting"
+            except AttributeError as e:
+                print e.message
+
+            return
+
+        list_to_uninstall = _packages
 
     def __cmd_profile(self):
         if not op.is_exits('.hook/workspace_settings.json'):
@@ -408,7 +459,6 @@ class cmd_line(object):
             elif commands[0] == 'update':
                 print 'update =>'
             elif commands[0] == 'uninstall':
-
                 if not self.__is_workspace_setup():
                     manager.settings_not_found_error_print()
 

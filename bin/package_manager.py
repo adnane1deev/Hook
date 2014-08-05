@@ -10,10 +10,10 @@ import re
 
 
 def settings_not_found_error_print():
-    print "workspace_settings.json file not found, and this might be of the following reasons :"
-    print "\t-You not in the workspace directory"
-    print "\t-Your workspace haven't been setup yet"
-    print "\t-Deleted by accident"
+    print "  workspace_settings.json file not found, and this might be of the following reasons :\n"
+    print "\t- You not in the workspace directory"
+    print "\t- Your workspace haven't been setup yet"
+    print "\t- Deleted by accident"
 
 
 def register_installed_package(_pkg):
