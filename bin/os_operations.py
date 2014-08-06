@@ -24,6 +24,10 @@ def define_operation_system():
         return 'linux'
 
 
+def list_dir(_dir):
+    return os.listdir(_dir)
+
+
 def remove_file(_path):
     if os.path.exists(_path):
         os.unlink(_path)
@@ -124,7 +128,6 @@ def siparator():
         return '\\'
 
     return '/'
-
 
 
 def create_tree(_tree):

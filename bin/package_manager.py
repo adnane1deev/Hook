@@ -50,6 +50,29 @@ def is_in_cache(_pkg):
     return False
 
 
+def uninstall_package(_pkg_name, _pkg_version):
+    if not op.is_exits("components") or not op.is_exits('.hook/workspace_settings.json'):
+        settings_not_found_error_print()
+        return
+
+    list_dir = op.list_dir("components")
+    settings = helper.load_json_file('.hook/workspace_settings.json')
+    installed = settings['installed_packages']
+
+    for item in installed:
+        if item['package'] == _pkg_name + '-' + _pkg_version + '.zip':
+            installed.remove(item)
+            settings['installed_packages'] = installed
+            break
+
+    if _pkg_name + '-' + _pkg_version not in set(list_dir):
+        print "\n" + _pkg_name + '-' + _pkg_version + 'does not match any folder in components directory'
+        return
+
+    op.remove_directory("components/" + _pkg_name + '-' + _pkg_version)
+    op.create_file('.hook/workspace_settings.json', op.object_to_json(settings))
+
+
 def get_installed_packages():
     settings = helper.load_json_file('.hook/workspace_settings.json')
     return settings['installed_packages']

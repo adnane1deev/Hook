@@ -314,7 +314,7 @@ class cmd_line(object):
                     package_index = int(_input)
 
                     if 0 < package_index <= length:
-                        pkg = installed_list[package_index]
+                        pkg = installed_list[package_index-1]
                         name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
                         print
                         print Back.RED + " DANGER ZONE " + Back.RESET
@@ -323,10 +323,11 @@ class cmd_line(object):
                             confirmation = raw_input("\n\t" + Fore.RED + "{0} ({1})".format(name, version) + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
 
                             if confirmation in ('y', 'Y', 'yes'):
+                                manager.uninstall_package(name, version)
                                 print "Delete action on "+name
                                 break
                             elif confirmation in ('', 'n', 'N', 'no'):
-                                print "Operation is canceled"
+                                print "\nOperation is canceled"
                                 print "Hook is quitting"
                                 break
                         break

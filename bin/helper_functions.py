@@ -11,10 +11,13 @@ def pretty_print(_list):
 
 
 def load_json_file(__FilePath=None):
-    __file = open(__FilePath, 'r')
-    data = __file.read()
-    __file.close()
-    return json.loads(data)
+    try:
+        __file = open(__FilePath, 'r')
+        data = __file.read()
+        __file.close()
+        return json.loads(data)
+    except ValueError:
+        return ""
 
 
 def prettify(__json, __indent=4):
