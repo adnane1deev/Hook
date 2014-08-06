@@ -50,6 +50,21 @@ def is_in_cache(_pkg):
     return False
 
 
+def match_package(_pkg):
+    if not op.is_exits('.hook/workspace_settings.json'):
+        settings_not_found_error_print()
+
+        return
+
+    matches = []
+    installed_packages = get_installed_packages()
+    for item in installed_packages:
+        if re.match(r'.*' + _pkg + '.*', item['package'], re.IGNORECASE) is not None:
+            matches.append(item)
+
+    return matches
+
+
 def uninstall_package(_pkg_name, _pkg_version):
     if not op.is_exits("components") or not op.is_exits('.hook/workspace_settings.json'):
         settings_not_found_error_print()

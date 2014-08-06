@@ -289,59 +289,71 @@ class cmd_line(object):
     def __cmd_update(self):
         print
 
-    def __cmd_uninstall(self, _packages=None):
-
-        installed_list = manager.get_installed_packages()
+    def __uninstall_helper_interface(self, installed_list):
         length = len(installed_list)
         _input = ''
-        if _packages is None or _packages == []:
-            try:
-                print Fore.BLUE+"{0:4}  {1:28}{2:28}{3:28}".format("Num", "Installed at", "Name", "Version")+Fore.RESET
-                print
-                for item_index in range(length):
-                    pkg = installed_list[item_index]
-                    installed_at = pkg['installed_at']
+        try:
+            print Fore.BLUE+"{0:4}  {1:28}{2:28}{3:28}".format("Num", "Installed at", "Name", "Version")+Fore.RESET
+            print
+            for item_index in range(length):
+                pkg = installed_list[item_index]
+                installed_at = pkg['installed_at']
+                name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+
+                print "[{0:2}]  {1:28}{2:28}{3:28}".format((item_index+1), installed_at, name, version)
+
+            print
+            while True:
+                _input = raw_input("Choose your package number (1: DEFAULT, q: QUIT): ")
+                if _input == "":
+                    _input = 1
+
+                package_index = int(_input)
+
+                if 0 < package_index <= length:
+                    pkg = installed_list[package_index-1]
                     name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+                    print
+                    print Back.RED + " DANGER ZONE " + Back.RESET
 
-                    print "[{0:2}]  {1:28}{2:28}{3:28}".format((item_index+1), installed_at, name, version)
+                    while True:
+                        confirmation = raw_input("\n\t" + Fore.RED + "{0} ({1})".format(name, version) + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
 
-                print
-                while True:
-                    _input = raw_input("Choose your package number (1: DEFAULT, q: QUIT): ")
-                    if _input == "":
-                        _input = 1
+                        if confirmation in ('y', 'Y', 'yes'):
+                            manager.uninstall_package(name, version)
+                            print "Delete action on "+name
+                            break
+                        elif confirmation in ('', 'n', 'N', 'no'):
+                            print "\nOperation is canceled"
+                            print "Hook is quitting"
+                            break
+                    break
 
-                    package_index = int(_input)
+        except ValueError:
+            if _input not in ('q', 'quit'):
+                print "No value was specified"
+            print "Hook is quitting"
+        except AttributeError as e:
+            print e.message
 
-                    if 0 < package_index <= length:
-                        pkg = installed_list[package_index-1]
-                        name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
-                        print
-                        print Back.RED + " DANGER ZONE " + Back.RESET
+    def __cmd_uninstall(self, _packages=None):
+        if _packages is None or _packages == []:
+            installed_list = manager.get_installed_packages()
+            if len(installed_list) > 0:
+                self.__uninstall_helper_interface(installed_list)
 
-                        while True:
-                            confirmation = raw_input("\n\t" + Fore.RED + "{0} ({1})".format(name, version) + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
-
-                            if confirmation in ('y', 'Y', 'yes'):
-                                manager.uninstall_package(name, version)
-                                print "Delete action on "+name
-                                break
-                            elif confirmation in ('', 'n', 'N', 'no'):
-                                print "\nOperation is canceled"
-                                print "Hook is quitting"
-                                break
-                        break
-
-            except ValueError:
-                if _input not in ('q', 'quit'):
-                    print "No value was specified"
-                print "Hook is quitting"
-            except AttributeError as e:
-                print e.message
-
+            else:
+                print Fore.YELLOW + "No packages were installed yet" + Fore.RESET
             return
 
-        list_to_uninstall = _packages
+        item_to_uninstall = _packages[0]
+        matching_list = manager.match_package(item_to_uninstall)
+        if len(matching_list) > 0:
+            print Back.BLUE + " Packages matching " + Back.RESET + "({0})\n".format(item_to_uninstall)
+            self.__uninstall_helper_interface(manager.match_package(item_to_uninstall))
+
+        else:
+            print Fore.YELLOW + "No package matches " + Fore.RESET + "({0})\n".format(item_to_uninstall)
 
     def __cmd_profile(self):
         if not op.is_exits('.hook/workspace_settings.json'):
