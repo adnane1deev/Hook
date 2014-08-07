@@ -15,6 +15,7 @@ import package_manager as manager
 import os
 import helper_functions as helper
 import app_setup as app
+import time
 
 
 class cmd_line(object):
@@ -378,12 +379,65 @@ class cmd_line(object):
             size = op.get_folder_size('components/' + item)
             print "\t" + "{0:32}{1:14}{2:14}".format(item, ("%0.2f" % size['mb']), ("%d" % size['kb']))
 
-
     def __cmd_home(self):
         print
 
-    def __cmd_cache(self):
+    def __cache_list(self):
+        cache_list = op.list_dir(op.get_home() + op.siparator() + hook.data_storage_path)
+        length = len(cache_list)
+        print Fore.BLUE + "{0:4} {1:35}{2:10}".format("Num", "File name", "Type") + Fore.RESET
         print
+        for index in range(length):
+            try:
+                cached_file = cache_list[index]
+                name, type = re.search(r'(.+?)\.(zip|rar|gzip|bzip2|tar)', cached_file, re.IGNORECASE).groups()
+
+                print "[{0:2}] {1:35}{2:10}".format((index+1), name, type)
+            except Exception:
+                pass
+
+    def __cache_remove(self):
+        print
+
+    def __cache_info(self):
+        siparator = op.siparator()
+        cache_path = op.get_home() + siparator + hook.data_storage_path
+        cache_list = op.list_dir(cache_path)
+        length = len(cache_list)
+        print Fore.BLUE + "{0:4} {1:35}{2:8}{3:28}{4:14}{5:14}".format("Num", "File name", "Type", "time", "Size/(mb)", "Size/(kb)") + Fore.RESET
+        print
+        for index in range(length):
+            try:
+                cached_file = cache_list[index]
+                name, type = re.search(r'(.+?)\.(zip|rar|gzip|bzip2|tar)', cached_file, re.IGNORECASE).groups()
+                file_size = op.get_file_size(cache_path + siparator + cached_file)
+                t = os.path.getmtime(cache_path + siparator + cached_file)  # returns seconds
+                m = time.strftime("%H:%M:%S - %b, %d %Y", time.gmtime(t))
+                print "[{0:2}] {1:35}{2:8}{3:28}{4:14}{5:14}".format((index+1), name, type, m, ("%0.2f" % file_size['mb']), ("%d" % file_size['kb']))
+            except Exception:
+                pass
+
+    def __cache_rename(self):
+        print
+
+    def __cmd_cache(self, cache_cmd):
+        """
+        cache related commands: list, remove, info, rename
+        """
+        if cache_cmd[0] == 'list':
+            self.__cache_list()
+
+        elif cache_cmd[0] == 'remove':
+            self.__cache_remove()
+
+        elif cache_cmd[0] == 'info':
+            self.__cache_info()
+
+        elif cache_cmd[0] == 'rename':
+            self.__cache_rename()
+
+        else:
+            print "Unrecognized command"
 
     def __initCommands(self):
         self.__parser.add_argument('commands', nargs="*")
@@ -484,7 +538,11 @@ class cmd_line(object):
             elif commands[0] == 'home':
                 print 'home =>'
             elif commands[0] == 'cache':
-                print 'cache =>'
+                try:
+                    self.__cmd_cache(commands[1:])
+
+                except Exception:
+                    print Fore.YELLOW + "Not enough arguments" + Fore.RESET
             else:
                 self.__parser.print_help()
 

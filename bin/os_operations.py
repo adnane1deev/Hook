@@ -164,6 +164,13 @@ def get_folder_size(_path="."):
     return {'mb': (folder_size/(1024*1024.0)), 'kb': (folder_size/1024.0)}
 
 
+def get_file_size(_path):
+    if not is_exits(_path):
+        return
+
+    file_size = os.path.getsize(_path)
+    return {'mb': (file_size/(1024*1024.0)), 'kb': (file_size/1024.0)}
+
 def copy_to_clipboard(_str):
     tk = Tk()
     tk.withdraw()
