@@ -350,7 +350,7 @@ class cmd_line(object):
         item_to_uninstall = _packages[0]
         matching_list = manager.match_package(item_to_uninstall)
         if len(matching_list) > 0:
-            print Back.BLUE + " Packages matching " + Back.RESET + "({0})\n".format(item_to_uninstall)
+            print Back.BLUE + " Package(s) matching " + Back.RESET + " ({0})\n".format(item_to_uninstall)
             self.__uninstall_helper_interface(manager.match_package(item_to_uninstall))
 
         else:
@@ -383,7 +383,7 @@ class cmd_line(object):
         print
 
     def __cache_list(self):
-        cache_list = op.list_dir(op.get_home() + op.siparator() + hook.data_storage_path)
+        cache_list = op.list_dir(op.get_home() + op.separator() + hook.data_storage_path)
         length = len(cache_list)
         print Fore.BLUE + "{0:4} {1:35}{2:10}".format("Num", "File name", "Type") + Fore.RESET
         print
@@ -400,8 +400,8 @@ class cmd_line(object):
         print
 
     def __cache_info(self):
-        siparator = op.siparator()
-        cache_path = op.get_home() + siparator + hook.data_storage_path
+        separator = op.separator()
+        cache_path = op.get_home() + separator + hook.data_storage_path
         cache_list = op.list_dir(cache_path)
         length = len(cache_list)
         print Fore.BLUE + "{0:4} {1:35}{2:8}{3:28}{4:14}{5:14}".format("Num", "File name", "Type", "time", "Size/(mb)", "Size/(kb)") + Fore.RESET
@@ -410,15 +410,42 @@ class cmd_line(object):
             try:
                 cached_file = cache_list[index]
                 name, type = re.search(r'(.+?)\.(zip|rar|gzip|bzip2|tar)', cached_file, re.IGNORECASE).groups()
-                file_size = op.get_file_size(cache_path + siparator + cached_file)
-                t = os.path.getmtime(cache_path + siparator + cached_file)  # returns seconds
+                file_size = op.get_file_size(cache_path + separator + cached_file)
+                t = os.path.getmtime(cache_path + separator + cached_file)  # returns seconds
                 m = time.strftime("%H:%M:%S - %b, %d %Y", time.gmtime(t))
                 print "[{0:2}] {1:35}{2:8}{3:28}{4:14}{5:14}".format((index+1), name, type, m, ("%0.2f" % file_size['mb']), ("%d" % file_size['kb']))
             except Exception:
                 pass
 
-    def __cache_rename(self):
+    def __cache_rename(self, _args):
+        old_name = _args[0]
+        new_name = _args[1]
+
+        separator = op.separator()
+        cache_path = op.get_home() + separator + hook.data_storage_path
+        cache_list = op.list_dir(cache_path)
+
+        matching_list = manager.match_package_by_list(cache_list, old_name)
+        length = len(matching_list)
+        if length == 0:
+            print Fore.YELLOW + 'No file matches ' + Fore.RESET + "({0})\n".format(old_name)
+            return
+
+        if length == 1:
+            old_name = matching_list[0]
+            oldname_file_extension = manager.get_file_extension(old_name)
+            newname_file_extension = manager.get_file_extension(new_name)
+            extension = manager.choose_extension(oldname_file_extension, newname_file_extension)
+            if extension is not None:
+                new_name += '.'+extension
+
+            op.rename_file(cache_path + separator + old_name, cache_path + separator + new_name)
+            print Fore.YELLOW + old_name + Fore.RESET + ' renamed -> ' + Fore.GREEN + new_name + Fore.RESET
+            return
+
+        print Back.BLUE + ' File(s) matching ' + Back.RESET + " ({0})".format(old_name)
         print
+        print matching_list
 
     def __cmd_cache(self, cache_cmd):
         """
@@ -434,7 +461,7 @@ class cmd_line(object):
             self.__cache_info()
 
         elif cache_cmd[0] == 'rename':
-            self.__cache_rename()
+            self.__cache_rename(cache_cmd[1:])
 
         else:
             print "Unrecognized command"

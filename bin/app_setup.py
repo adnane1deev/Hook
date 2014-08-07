@@ -8,7 +8,7 @@ import os
 
 def setup():
     home_dir = op.get_home()
-    app_tree = home_dir + op.siparator() + hook.data_storage_path
+    app_tree = home_dir + op.separator() + hook.data_storage_path
 
     if not os.path.exists(app_tree):
         op.create_tree(app_tree)

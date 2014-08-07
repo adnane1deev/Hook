@@ -28,6 +28,14 @@ def list_dir(_dir):
     return os.listdir(_dir)
 
 
+def rename_file(_old_name, _new_name):
+    if is_exits(_old_name):
+        os.rename(_old_name, _new_name)
+        return True
+
+    return False
+
+
 def remove_file(_path):
     if os.path.exists(_path):
         os.unlink(_path)
@@ -80,6 +88,7 @@ def hide_directory(_path):
 def show_directory(_path):
     show_file(_path)
 
+
 def __hide(_name):
     FILE_ATTRIBUTE_HIDDEN = 0x02
     ret = ctypes.windll.kernel32.SetFileAttributesW(ur''+_name, FILE_ATTRIBUTE_HIDDEN)
@@ -123,7 +132,7 @@ def generate_json_file(_filename, _pkg_list):
     create_file(_filename, content)
 
 
-def siparator():
+def separator():
     if define_operation_system() == 'windows':
         return '\\'
 
@@ -170,6 +179,7 @@ def get_file_size(_path):
 
     file_size = os.path.getsize(_path)
     return {'mb': (file_size/(1024*1024.0)), 'kb': (file_size/1024.0)}
+
 
 def copy_to_clipboard(_str):
     tk = Tk()

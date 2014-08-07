@@ -65,6 +65,37 @@ def match_package(_pkg):
     return matches
 
 
+def get_file_extension(_filename):
+    try:
+        type = re.search(r'(.+?)\.(zip|rar|gzip|bzip2|tar)', _filename, re.IGNORECASE).group(2)
+        return type
+    except Exception as e:
+        return None
+
+
+def match_package_by_list(_files_list, _filename):
+    matches = []
+    for item in _files_list:
+        if re.match(r'.*' + _filename + '.*', item, re.IGNORECASE) is not None:
+            matches.append(item)
+
+    return matches
+
+
+def choose_extension(old, new):
+    if old == new is None:
+        return None
+
+    elif old == new is not None:
+        return None
+
+    elif new is not None:
+        return None
+
+    elif old is not None:
+        return old
+
+
 def uninstall_package(_pkg_name, _pkg_version):
     if not op.is_exits("components") or not op.is_exits('.hook/workspace_settings.json'):
         settings_not_found_error_print()
