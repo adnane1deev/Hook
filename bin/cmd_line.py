@@ -443,9 +443,50 @@ class cmd_line(object):
             print Fore.YELLOW + old_name + Fore.RESET + ' renamed -> ' + Fore.GREEN + new_name + Fore.RESET
             return
 
-        print Back.BLUE + ' File(s) matching ' + Back.RESET + " ({0})".format(old_name)
-        print
-        print matching_list
+        _input = ''
+        try:
+            print Back.BLUE + ' File(s) matching ' + Back.RESET + " ({0})".format(old_name)
+            print
+            print Fore.BLUE + "{0:4} {1:30}".format('Num', 'File name') + Fore.RESET
+            print
+            for index in range(length):
+                print "[{0:2}] {1:30}".format((index + 1), matching_list[index])
+
+            print
+            while True:
+                _input = raw_input("Choose your file number (1: DEFAULT, q: QUIT): ")
+                if _input == "":
+                    _input = 1
+
+                file_index = int(_input)
+                if 0 < file_index <= length:
+                    old_name = matching_list[(file_index - 1)]
+                    print "\n" + Back.RED + " WARNING " + Back.RESET + " Selected[{0}]".format(Fore.YELLOW + old_name + Fore.RESET)
+
+                    while True:
+                        confirmation = raw_input("\n\tAre you sure (y,N): ")
+                        if confirmation in ('y', 'Y', 'yes'):
+                            oldname_file_extension = manager.get_file_extension(old_name)
+                            newname_file_extension = manager.get_file_extension(new_name)
+                            extension = manager.choose_extension(oldname_file_extension, newname_file_extension)
+                            if extension is not None:
+                                new_name += '.'+extension
+
+                            op.rename_file(cache_path + separator + old_name, cache_path + separator + new_name)
+                            print "\n" + Fore.YELLOW + old_name + Fore.RESET + ' renamed -> ' + Fore.GREEN + new_name + Fore.RESET
+                            break
+                        elif confirmation in ('', 'n', 'N', 'no'):
+                            print "\nOperation is canceled"
+                            print "Hook is quitting"
+                            break
+                    break
+
+        except ValueError:
+            if _input not in ('q', 'quit'):
+                print "No value was specified"
+                print "Hook is quitting"
+        except AttributeError as e:
+            print e.message
 
     def __cmd_cache(self, cache_cmd):
         """
