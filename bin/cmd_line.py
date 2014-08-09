@@ -396,8 +396,110 @@ class cmd_line(object):
             except Exception:
                 pass
 
-    def __cache_remove(self):
-        print
+    def __cache_remove(self, _args):
+        separator = op.separator()
+        cache_path = op.get_home() + separator + hook.data_storage_path
+        cache_list = op.list_dir(cache_path)
+        if len(_args) > 0:
+            file_name = _args[0]
+            matching_list = manager.match_package_by_list(cache_list, file_name)
+            length = len(matching_list)
+            if length == 0:
+                print Fore.YELLOW + 'No file matches ' + Fore.RESET + "({0})\n".format(file_name)
+                return
+
+            if length == 1:
+                file_name = matching_list[0]
+                print Back.RED + " DANGER ZONE " + Back.RESET
+                while True:
+                    confirmation = raw_input("\n\t" + Fore.RED + file_name + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
+                    if confirmation in ('y', 'Y', 'yes'):
+                        op.remove_file(cache_path + separator + file_name)
+                        print "\n" + Fore.YELLOW + file_name + Fore.RESET + " has been deleted"
+                        break
+                    elif confirmation in ('', 'n', 'N', 'no'):
+                        print "\nOperation is canceled"
+                        print "Hook is quitting"
+                        break
+                return
+
+            _input = ''
+            try:
+                print Back.BLUE + ' File(s) matching ' + Back.RESET + " ({0})".format(file_name)
+                print
+                print Fore.BLUE + "{0:4} {1:30}".format('Num', 'File name') + Fore.RESET
+                print
+                for index in range(length):
+                    print "[{0:2}] {1:30}".format((index + 1), matching_list[index])
+
+                print
+                while True:
+                    _input = raw_input("Choose your file number (1: DEFAULT, q: QUIT): ")
+                    if _input == "":
+                        _input = 1
+
+                    file_index = int(_input)
+                    if 0 < file_index <= length:
+                        file_name = matching_list[(file_index - 1)]
+                        print "\n" + Back.RED + " WARNING " + Back.RESET + " Selected[{0}]".format(Fore.YELLOW + file_name + Fore.RESET)
+
+                        while True:
+                            confirmation = raw_input("\n\t" + Fore.RED + file_name + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
+                            if confirmation in ('y', 'Y', 'yes'):
+                                op.remove_file(cache_path + separator + file_name)
+                                print "\n" + Fore.YELLOW + file_name + Fore.RESET + " has been deleted"
+                                break
+                            elif confirmation in ('', 'n', 'N', 'no'):
+                                print "\nOperation is canceled"
+                                print "Hook is quitting"
+                                break
+                        break
+            except ValueError:
+                if _input not in ('q', 'quit'):
+                    print "No value was specified"
+                    print "Hook is quitting"
+            except AttributeError as e:
+                print e.message
+
+            return
+
+        _input = ''
+        try:
+            length = len(cache_list)
+            print Fore.BLUE + "{0:4} {1:30}".format('Num', 'File name') + Fore.RESET
+            print
+            for index in range(length):
+                print "[{0:2}] {1:30}".format((index + 1), cache_list[index])
+
+            print
+            while True:
+                _input = raw_input("Choose your file number (1: DEFAULT, q: QUIT): ")
+                if _input == "":
+                    _input = 1
+
+                file_index = int(_input)
+                if 0 < file_index <= length:
+                    file_name = cache_list[(file_index - 1)]
+                    print "\n" + Back.RED + " WARNING " + Back.RESET + " Selected[{0}]".format(Fore.YELLOW + file_name + Fore.RESET)
+
+                    while True:
+                        confirmation = raw_input("\n\t" + Fore.RED + file_name + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
+                        if confirmation in ('y', 'Y', 'yes'):
+                            op.remove_file(cache_path + separator + file_name)
+                            print "\n" + Fore.YELLOW + file_name + Fore.RESET + " has been deleted"
+                            break
+                        elif confirmation in ('', 'n', 'N', 'no'):
+                            print "\nOperation is canceled"
+                            print "Hook is quitting"
+                            break
+                    break
+        except ValueError:
+            if _input not in ('q', 'quit'):
+                print "No value was specified"
+                print "Hook is quitting"
+        except AttributeError as e:
+            print e.message
+
 
     def __cache_info(self):
         separator = op.separator()
@@ -488,6 +590,15 @@ class cmd_line(object):
         except AttributeError as e:
             print e.message
 
+    def __cache_help(self):
+        print "usage: hook cache <command> [<args>] [<options>]\n"
+        print "Commands:"
+        print "{0}{1:20}{2}".format((" " * 2), 'help', "")
+        print "{0}{1:20}{2}".format((" " * 2), 'list', "")
+        print "{0}{1:20}{2}".format((" " * 2), 'info', "")
+        print "{0}{1:20}{2}".format((" " * 2), 'remove', "")
+        print "{0}{1:20}{2}".format((" " * 2), 'rename', "")
+
     def __cmd_cache(self, cache_cmd):
         """
         cache related commands: list, remove, info, rename
@@ -496,13 +607,16 @@ class cmd_line(object):
             self.__cache_list()
 
         elif cache_cmd[0] == 'remove':
-            self.__cache_remove()
+            self.__cache_remove(cache_cmd[1:])
 
         elif cache_cmd[0] == 'info':
             self.__cache_info()
 
         elif cache_cmd[0] == 'rename':
             self.__cache_rename(cache_cmd[1:])
+
+        elif cache_cmd[0] == 'help':
+            self.__cache_help()
 
         else:
             print "Unrecognized command"
