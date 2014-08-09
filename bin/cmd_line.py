@@ -179,7 +179,7 @@ class cmd_line(object):
 
                 if response is not None:
                     if new_line == "#":
-                        print "->\n"
+                        print "\n"
 
                     break
                 new_line = "#"
@@ -593,11 +593,11 @@ class cmd_line(object):
     def __cache_help(self):
         print "usage: hook cache <command> [<args>] [<options>]\n"
         print "Commands:"
-        print "{0}{1:20}{2}".format((" " * 2), 'help', "")
-        print "{0}{1:20}{2}".format((" " * 2), 'list', "")
-        print "{0}{1:20}{2}".format((" " * 2), 'info', "")
-        print "{0}{1:20}{2}".format((" " * 2), 'remove', "")
-        print "{0}{1:20}{2}".format((" " * 2), 'rename', "")
+        print "{0}{1:19}{2}".format((" " * 2), 'help', "show this help message")
+        print "{0}{1:19}{2}".format((" " * 2), 'list', "list cached files")
+        print "{0}{1:19}{2}".format((" " * 2), 'info', "show basic information about cached files")
+        print "{0}{1:19}{2}".format((" " * 2), 'remove', "remove selected file from cache")
+        print "{0}{1:19}{2}".format((" " * 2), 'rename', "rename selected cached file")
 
     def __cmd_cache(self, cache_cmd):
         """
@@ -619,7 +619,8 @@ class cmd_line(object):
             self.__cache_help()
 
         else:
-            print "Unrecognized command"
+            print Back.RED + " Unrecognized command " + Back.RESET
+            self.__cache_help()
 
     def __initCommands(self):
         self.__parser.add_argument('commands', nargs="*")
