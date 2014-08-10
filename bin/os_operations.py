@@ -9,6 +9,7 @@ import ctypes
 import distutils.dir_util as dir_util
 from os.path import expanduser
 from zipfile import *
+import webbrowser
 try:
     from Tkinter import Tk
 except ImportError:
@@ -179,6 +180,15 @@ def get_file_size(_path):
 
     file_size = os.path.getsize(_path)
     return {'mb': (file_size/(1024*1024.0)), 'kb': (file_size/1024.0)}
+
+
+def open_url(_url):
+    """
+    Opens URL in DEFAULT browser
+    :param _url:
+    :return:
+    """
+    webbrowser.open(_url)
 
 
 def copy_to_clipboard(_str):

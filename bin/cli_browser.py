@@ -16,10 +16,30 @@ def robot():
     """
 
 
-
 class cli_browser(object):
 
     def __init__(self):
+        self.__http_status_code = {
+            200: 'Ok',
+            201: 'CREATED',
+            202: 'Accepted ',
+            203: 'Partial Information',
+            204: 'No Response',
+            400: 'Bad request',
+            401: 'Unauthorized',
+            402: 'PaymentRequired',
+            403: 'Forbidden',
+            404: 'Not found',
+            500: 'Internal Error',
+            501: 'Not implemented',
+            502: 'Service temporarily overloaded',
+            503: 'Gateway timeout',
+            301: 'Moved',
+            302: 'Found',
+            303: 'Method',
+            304: 'Not Modified'
+        }
+
         self.__cookies = cookielib.CookieJar()
         self.__cookiesHandler = urllib2.HTTPCookieProcessor(self.__cookies)
 
@@ -50,7 +70,13 @@ class cli_browser(object):
     def getRequestedURL(self):
         return self.__requestedURL
 
-    def submit(self):
+    def status_code_desc(self, _code):
+        try:
+            return self.__http_status_code[_code]
+        except Exception:
+            return 'Not found'
+
+    def submit(self, _return_status_code=False):
         attempts = 0
         while attempts < 10:
             try:
@@ -58,11 +84,14 @@ class cli_browser(object):
                 self.__responseContent = response.read()
                 self.__bots_verified = True
                 if 0 < attempts <= 10 and self.__first_round:
-                    print ""
+                    print "\n"
 
                 self.__first_round = True
                 return self.__responseContent
             except urllib2.URLError as e:
+                if _return_status_code:
+                    return e.code
+
                 if self.__bots_verified:
                     print robot()
 

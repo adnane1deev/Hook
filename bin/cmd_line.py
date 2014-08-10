@@ -379,8 +379,28 @@ class cmd_line(object):
             size = op.get_folder_size('components/' + item)
             print "\t" + "{0:32}{1:14}{2:14}".format(item, ("%0.2f" % size['mb']), ("%d" % size['kb']))
 
-    def __cmd_home(self):
-        print
+    def __cmd_home(self, _repository):
+        url = ''
+        if helper.is_ssh_url(_repository):
+            url = 'https://github.com/' + re.search(r':(.+?).git$', _repository, re.IGNORECASE).group(1)
+
+        elif helper.is_http_url(_repository):
+            url = _repository
+
+        elif helper.is_repository(_repository):
+            url = 'https://github.com/' + _repository
+
+        cmd_browser = cli_browser.cli_browser()
+        cmd_browser.setRequestedURL(url)
+        print 'Requesting -> ' + url
+        response = cmd_browser.submit(_return_status_code=True)
+
+        try:
+            response_status = int(response)
+            print str(response_status) + ': ' + cmd_browser.status_code_desc(response_status)
+        except ValueError as e:
+            print 'Opening -> ' + url + ' in the default web browser'
+            op.open_url(url)
 
     def __cache_list(self):
         cache_list = op.list_dir(op.get_home() + op.separator() + hook.data_storage_path)
@@ -719,7 +739,8 @@ class cmd_line(object):
                 self.__cmd_profile()
 
             elif commands[0] == 'home':
-                print 'home =>'
+                self.__cmd_home(commands[1])
+
             elif commands[0] == 'cache':
                 try:
                     self.__cmd_cache(commands[1:])
