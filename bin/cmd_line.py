@@ -390,16 +390,20 @@ class cmd_line(object):
         elif helper.is_repository(_repository):
             url = 'https://github.com/' + _repository
 
+        if url == '':
+            print "No proper information was given"
+            return
+
         cmd_browser = cli_browser.cli_browser()
         cmd_browser.setRequestedURL(url)
-        print 'Requesting -> ' + url
+        print Fore.GREEN + 'Requesting' + Fore.RESET + ' -> ' + url
         response = cmd_browser.submit(_return_status_code=True)
 
         try:
             response_status = int(response)
-            print str(response_status) + ': ' + cmd_browser.status_code_desc(response_status)
+            print Fore.YELLOW + str(response_status) + Fore.RESET + ': ' + cmd_browser.status_code_desc(response_status)
         except ValueError as e:
-            print 'Opening -> ' + url + ' in the default web browser'
+            print Fore.GREEN + 'Opening' + Fore.RESET + ' -> ' + url + ' in the default web browser'
             op.open_url(url)
 
     def __cache_list(self):
