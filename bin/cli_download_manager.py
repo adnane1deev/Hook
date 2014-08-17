@@ -101,7 +101,7 @@ class download_manager(object):
 
         return {'file_name': file_name, 'no_ext_name': file_name.split('.')[0], 'file_size': file_size}
 
-    def __get_file(self, _url):
+    def __get_file(self, _url, _repository=None):
         pkg_name_size = self.__get_package_name(_url)
 
         if manager.is_package_registered(pkg_name_size['file_name']):
@@ -109,17 +109,18 @@ class download_manager(object):
 
         elif manager.is_in_cache(pkg_name_size['file_name']):
             self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])
-            manager.register_installed_package(pkg_name_size['file_name'])
+            manager.register_installed_package(pkg_name_size['file_name'], _repository)
         else:
             self.__download(_url, pkg_name_size)
-            manager.register_installed_package(pkg_name_size['file_name'])
+            manager.register_installed_package(pkg_name_size['file_name'], _repository)
 
-    def startQueue(self, _url_s):
+    def startQueue(self, _url_s, _repositories=None):
         try:
             if isinstance(_url_s, types.ListType):
                 #print 'list'
-                for url in _url_s:
-                    self.__get_file(url)
+                length = len(_url_s)
+                for index in range(length):
+                    self.__get_file(_url_s[index], _repositories[index])
 
             elif isinstance(_url_s, types.StringType):
                 #print 'str'

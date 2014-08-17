@@ -129,6 +129,7 @@ class cmd_line(object):
         #helpers.prettify(list)
 
         urls = []
+        repositories = []
 
         for pkg in list:
             name = pkg['package']
@@ -151,10 +152,11 @@ class cmd_line(object):
 
             #url = 'https://github.com/fabpot/Twig/archive/v1.16.0.zip'
             url = 'https://github.com/{0}/archive/{1}.zip'.format(name, version)
+            repositories.append(name)
             #print url
             urls.append(url)
 
-        download_manager.startQueue(urls)
+        download_manager.startQueue(urls, _repositories=repositories)
 
         browser_connection.close()
         browser_object.closeConnections()
@@ -283,12 +285,16 @@ class cmd_line(object):
             break
         cmd_browser.closeConnections()
 
-
     def __cmd_list(self):
         manager.get_list_of_installed_packages()
 
-    def __cmd_update(self):
-        print
+    def __cmd_update(self, args):
+        if not args:
+            print "empty"
+            return
+
+        package = args[0]
+        print helper.prettify(manager.match_package(package))
 
     def __uninstall_helper_interface(self, installed_list):
         length = len(installed_list)
@@ -524,7 +530,6 @@ class cmd_line(object):
         except AttributeError as e:
             print e.message
 
-
     def __cache_info(self):
         separator = op.separator()
         cache_path = op.get_home() + separator + hook.data_storage_path
@@ -731,7 +736,8 @@ class cmd_line(object):
                 self.__cmd_list()
 
             elif commands[0] == 'update':
-                print 'update =>'
+                self.__cmd_update(commands[1:])
+
             elif commands[0] == 'uninstall':
                 if not self.__is_workspace_setup():
                     manager.settings_not_found_error_print()

@@ -16,14 +16,14 @@ def settings_not_found_error_print():
     print "\t- Deleted by accident"
 
 
-def register_installed_package(_pkg):
+def register_installed_package(_pkg, _repository=None):
     if not op.is_exits('.hook/workspace_settings.json'):
         settings_not_found_error_print()
 
         return
 
     created_time = datetime.today().strftime('%H:%M:%S - %b, %d %Y')
-    installed_package = {"package": _pkg, "installed_at": created_time}
+    installed_package = {"repository": _repository, "package": _pkg, "installed_at": created_time}
 
     settings = helper.load_json_file('.hook/workspace_settings.json')
     settings['installed_packages'].append(installed_package)
