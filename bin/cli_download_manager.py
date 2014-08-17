@@ -101,20 +101,32 @@ class download_manager(object):
 
         return {'file_name': file_name, 'no_ext_name': file_name.split('.')[0], 'file_size': file_size}
 
-    def __get_file(self, _url, _repository=None):
+    def __get_file(self, _url, _repository=None, _params=None):
+        if not _params:
+            _params = {'type': 'install'}
         pkg_name_size = self.__get_package_name(_url)
 
-        if manager.is_package_registered(pkg_name_size['file_name']):
-            print "{0} is already installed".format(pkg_name_size['file_name'])
+        if _params['type'] == 'update' and not manager.is_package_registered(pkg_name_size['file_name']):
+            if manager.is_in_cache(pkg_name_size['file_name']):
+                self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])
+                manager.update_installed_package(pkg_name_size['file_name'], _params=_params)
 
-        elif manager.is_in_cache(pkg_name_size['file_name']):
-            self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])
-            manager.register_installed_package(pkg_name_size['file_name'], _repository)
-        else:
-            self.__download(_url, pkg_name_size)
-            manager.register_installed_package(pkg_name_size['file_name'], _repository)
+            else:
+                self.__download(_url, pkg_name_size)
+                manager.update_installed_package(pkg_name_size['file_name'], _params=_params)
 
-    def startQueue(self, _url_s, _repositories=None):
+        if _params['type'] == 'install':
+            if manager.is_package_registered(pkg_name_size['file_name']):
+                print "{0} is already installed".format(pkg_name_size['file_name'])
+
+            elif manager.is_in_cache(pkg_name_size['file_name']):
+                self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])
+                manager.register_installed_package(pkg_name_size['file_name'], _repository)
+            else:
+                self.__download(_url, pkg_name_size)
+                manager.register_installed_package(pkg_name_size['file_name'], _repository)
+
+    def startQueue(self, _url_s, _repositories=None, _params=None):
         try:
             if isinstance(_url_s, types.ListType):
                 #print 'list'
@@ -124,7 +136,7 @@ class download_manager(object):
 
             elif isinstance(_url_s, types.StringType):
                 #print 'str'
-                self.__get_file(_url_s)
+                self.__get_file(_url_s, _params=_params)
 
             else:
                 raise idm_exception('start queue exception')

@@ -294,7 +294,92 @@ class cmd_line(object):
             return
 
         package = args[0]
-        print helper.prettify(manager.match_package(package))
+        matching_list = manager.match_package(package)
+        if len(matching_list) > 0:
+            print Back.BLUE + " Package(s) matching " + Back.RESET + " ({0})\n".format(package)
+            self.__update_helper_interface(manager.match_package(package))
+
+        else:
+            print Fore.YELLOW + "No package matches " + Fore.RESET + "({0})\n".format(package)
+
+    def __update_helper_interface(self, installed_list):
+        browser_object = cli_browser.cli_browser()
+        browser_connection = browser_object.getHttpConnection()
+        download_manager = idm.download_manager()
+        download_manager.plugInBrowserWithDownloadManager(browser_connection)
+
+        length = len(installed_list)
+        _input = ''
+        try:
+            print Fore.BLUE+"{0:4}  {1:28}{2:28}{3:28}".format("Num", "Installed at", "Name", "Version")+Fore.RESET
+            print
+            for item_index in range(length):
+                pkg = installed_list[item_index]
+                installed_at = pkg['installed_at']
+                name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+
+                print "[{0:2}]  {1:28}{2:28}{3:28}".format((item_index+1), installed_at, name, version)
+
+            print
+            while True:
+                _input = raw_input("Choose your package number (1: DEFAULT, q: QUIT): ")
+                if _input == "":
+                    _input = 1
+
+                package_index = int(_input)
+
+                if 0 < package_index <= length:
+                    pkg = installed_list[package_index-1]
+                    name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+                    print
+
+                    browser_object.setRequestedURL('https://github.com/{0}/tags'.format(pkg['repository']))
+                    response = browser_object.submit()
+                    versions_list = browser_object.parseVersions(response)
+                    if len(versions_list) == 0 and version == 'master':
+                        print name + " is already up-to-date"
+                        browser_connection.close()
+                        browser_object.closeConnections()
+                        return
+
+                    elif versions_list[0] == version or versions_list[0] == 'v' + version:
+                        print name + " is already up-to-date"
+                        browser_connection.close()
+                        browser_object.closeConnections()
+                        return
+
+                    #browser_connection.close()
+                    #browser_object.closeConnections()
+                    #return
+
+                    print 'Update process: ' + Fore.YELLOW + version + Fore.RESET + ' -> ' + Fore.GREEN + versions_list[0] + Fore.RESET
+
+                    message = " is going to be updated to " + Fore.GREEN + name + ' (' + versions_list[0] + ')' + Fore.RESET + ". Are you sure (y,N): "
+                    while True:
+                        confirmation = raw_input("\n\t" + Fore.YELLOW + "{0} ({1})".format(name, version) + Fore.RESET + message)
+
+                        if confirmation in ('y', 'Y', 'yes'):
+                            url = 'https://github.com/{0}/archive/{1}.zip'.format(pkg['repository'], versions_list[0])
+                            download_manager.startQueue(url, _params={"repository": pkg['repository'], "type": "update", "old_pkg": pkg['package']})
+                            browser_connection.close()
+                            browser_object.closeConnections()
+                            print "Update action on "+name
+                            break
+                        elif confirmation in ('', 'n', 'N', 'no'):
+                            print "\nOperation is canceled"
+                            print "Hook is quitting"
+                            break
+                    break
+
+        except ValueError:
+            if _input not in ('q', 'quit'):
+                print "No value was specified"
+            print "Hook is quitting"
+        except AttributeError as e:
+            print e.message
+
+        browser_connection.close()
+        browser_object.closeConnections()
 
     def __uninstall_helper_interface(self, installed_list):
         length = len(installed_list)

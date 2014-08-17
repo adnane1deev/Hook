@@ -119,6 +119,30 @@ def uninstall_package(_pkg_name, _pkg_version):
     op.create_file('.hook/workspace_settings.json', op.object_to_json(settings))
 
 
+def update_installed_package(_pkg, _params=None):
+    if not op.is_exits('.hook/workspace_settings.json'):
+        settings_not_found_error_print()
+
+        return
+
+    update_time = datetime.today().strftime('%H:%M:%S - %b, %d %Y')
+    workspace_update = {'updated_to': _pkg, 'previous_package': _params['old_pkg'], 'repository': _params['repository'], 'updated_at': update_time}
+    name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', _params['old_pkg'], re.IGNORECASE).groups()
+    settings = helper.load_json_file('.hook/workspace_settings.json')
+    installed = settings['installed_packages']
+    length = len(installed)
+
+    for index in range(length):
+        if installed[index]['package'] == _params['old_pkg']:
+            installed[index]['package'] = _pkg
+            break
+
+    settings['installed_packages'] = installed
+    settings['workspace_updates'].append(workspace_update)
+    op.create_file('.hook/workspace_settings.json', op.object_to_json(settings))
+    op.remove_directory("components/" + name + '-' + version)
+
+
 def get_installed_packages():
     settings = helper.load_json_file('.hook/workspace_settings.json')
     return settings['installed_packages']
