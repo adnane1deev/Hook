@@ -290,7 +290,39 @@ class cmd_line(object):
 
     def __cmd_update(self, args):
         if not args:
-            print "empty"
+            browser_object = cli_browser.cli_browser()
+            browser_connection = browser_object.getHttpConnection()
+            download_manager = idm.download_manager()
+            download_manager.plugInBrowserWithDownloadManager(browser_connection)
+            installed_list = manager.get_installed_packages()
+
+            length = len(installed_list)
+            for package_index in range(length):
+                pkg = installed_list[package_index]
+                name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
+                print
+
+                browser_object.setRequestedURL('https://github.com/{0}/tags'.format(pkg['repository']))
+                response = browser_object.submit()
+                versions_list = browser_object.parseVersions(response)
+                if len(versions_list) == 0 and version == 'master':
+                    print name + " is already up-to-date"
+                    continue
+
+                elif versions_list[0] == version or versions_list[0] == 'v' + version:
+                    print name + " is already up-to-date"
+                    continue
+
+                print 'Update process: ' + Fore.YELLOW + version + Fore.RESET + ' -> ' + Fore.GREEN + versions_list[0] + Fore.RESET
+
+                message = " is going to be updated to " + Fore.GREEN + name + ' (' + versions_list[0] + ')' + Fore.RESET
+                print "\n\t" + Fore.YELLOW + "{0} ({1})".format(name, version) + Fore.RESET + message
+
+                url = 'https://github.com/{0}/archive/{1}.zip'.format(pkg['repository'], versions_list[0])
+                download_manager.startQueue(url, _params={"repository": pkg['repository'], "type": "update", "old_pkg": pkg['package']})
+
+            browser_connection.close()
+            browser_object.closeConnections()
             return
 
         package = args[0]
@@ -348,10 +380,6 @@ class cmd_line(object):
                         browser_object.closeConnections()
                         return
 
-                    #browser_connection.close()
-                    #browser_object.closeConnections()
-                    #return
-
                     print 'Update process: ' + Fore.YELLOW + version + Fore.RESET + ' -> ' + Fore.GREEN + versions_list[0] + Fore.RESET
 
                     message = " is going to be updated to " + Fore.GREEN + name + ' (' + versions_list[0] + ')' + Fore.RESET + ". Are you sure (y,N): "
@@ -363,7 +391,7 @@ class cmd_line(object):
                             download_manager.startQueue(url, _params={"repository": pkg['repository'], "type": "update", "old_pkg": pkg['package']})
                             browser_connection.close()
                             browser_object.closeConnections()
-                            print "Update action on "+name
+                            print "\nUpdate action on "+name
                             break
                         elif confirmation in ('', 'n', 'N', 'no'):
                             print "\nOperation is canceled"
