@@ -5,6 +5,7 @@ import types
 import hook_system_variables as hook
 import os_operations as op
 import package_manager as manager
+from colorama import Fore
 
 
 class idm_exception(Exception):
@@ -46,7 +47,7 @@ class download_manager(object):
         path = op.get_home()+'/'+hook.data_storage_path+'/'
 
         file_handler = open(path+file_name, 'wb')
-        print
+        #print
         print "Downloading: %s Bytes: %s" % (file_name, file_size)
 
         file_size_dl = 0
@@ -64,7 +65,7 @@ class download_manager(object):
             print status,
 
         file_handler.close()
-        print
+        print "\n"
 
         op.decompress_zipfile(path+file_name, './components')
 
@@ -73,12 +74,12 @@ class download_manager(object):
             cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+file_name
 
             op.decompress_zipfile(cache_path, './components')
-            print
+            #print
             print "Downloading: %s Bytes: %s" % (file_name, file_size)
 
             status = r"%10d  [%s]" % (file_size,  'Loaded from the cache')
             print status
-
+            print
             return False
 
         return True
@@ -116,8 +117,15 @@ class download_manager(object):
                 manager.update_installed_package(pkg_name_size['file_name'], _params=_params)
 
         if _params['type'] == 'install':
+            older_version = manager.is_exist_in_any_version(pkg_name_size['file_name'])
             if manager.is_package_registered(pkg_name_size['file_name']):
-                print "{0} is already installed".format(pkg_name_size['file_name'])
+                name, version = manager.package_split(pkg_name_size['file_name'])
+                print Fore.GREEN + "%s (%s)" % (name, version) + Fore.RESET + " is already installed\n"
+
+            elif older_version is not None:
+                name, version = manager.package_split(pkg_name_size['file_name'])
+                print "trying to install " + Fore.YELLOW + "%s (%s)" % (name, version) + Fore.RESET
+                print Fore.GREEN + "\t%s" % (older_version['name']) + Fore.RESET + " is already installed in version " + Fore.GREEN + "(%s)\n" % (older_version['version']) + Fore.RESET
 
             elif manager.is_in_cache(pkg_name_size['file_name']):
                 self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'])

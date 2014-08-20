@@ -96,6 +96,29 @@ def choose_extension(old, new):
         return old
 
 
+def package_split(_pkg, _type='both'):
+    if _type == 'both':
+        return re.search(r'(.+?)\-([\d\w\.]*)\.zip', _pkg, re.IGNORECASE).groups()
+
+    elif _type == 'name':
+        return re.search(r'(.+?)\-[\d\w\.]*\.zip', _pkg, re.IGNORECASE).group(1)
+
+    elif _type == 'version':
+        return re.search(r'.+?\-([\d\w\.]*)\.zip', _pkg, re.IGNORECASE).group(1)
+
+
+def is_exist_in_any_version(_pkg):
+    installed_packages = get_installed_packages()
+    package_name = package_split(_pkg, _type='name')
+
+    for pkg in installed_packages:
+        tmp_name, tmp_version = package_split(pkg['package'])
+        if package_name == tmp_name:
+            return {'name': tmp_name, 'version': tmp_version}
+
+    return None
+
+
 def uninstall_package(_pkg_name, _pkg_version):
     if not op.is_exits("components") or not op.is_exits('.hook/workspace_settings.json'):
         settings_not_found_error_print()
@@ -155,6 +178,9 @@ def get_list_of_installed_packages():
         return
 
     installed = get_installed_packages()
+    if len(installed) == 0:
+        print Fore.YELLOW + "No packages were installed yet" + Fore.RESET
+        return
 
     try:
         print Fore.BLUE+"{0:28}{1:28}{2:28}".format("Installed at", "Name", "Version")+Fore.RESET
@@ -168,4 +194,3 @@ def get_list_of_installed_packages():
 
     except AttributeError as e:
         print e.message
-
