@@ -23,8 +23,8 @@ class cmd_line(object):
     def __init__(self):
         self.__parser = argparse.ArgumentParser(
             prog=hook.application_name,
-            description=Fore.GREEN + hook.application_description + Fore.RESET,
-            epilog=Back.BLUE + hook.additional_description + Back.RESET,
+            description=hook.application_description,
+            #epilog=Back.BLUE + hook.additional_description + Back.RESET,
             usage=hook.usage_syntax,
             version=Fore.YELLOW + hook.application_name + ' ' + hook.application_version + Fore.RESET,
             conflict_handler='resolve'
@@ -109,7 +109,7 @@ class cmd_line(object):
                 dtls = pkg.split(':')
                 packages.append({"package": dtls[0], "version": dtls[1]})
 
-        print
+        #print
         #d.pretty_print(packages)
         self.__setup_workspace(packages, {"created_at": created_time, "installed_packages": [], "workspace_updates": []})
 
@@ -171,7 +171,7 @@ class cmd_line(object):
         while True:
             current = _current
             av_pages = _av_pages
-            prompt_message = "Choose your package number (1: DEFAULT): "
+            prompt_message = "Choose your package number (1: DEFAULT, q: QUIT): "
             repository = _package[0]
             cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
             response = ''
@@ -194,15 +194,17 @@ class cmd_line(object):
 
             parser = HTMLParser()
             length = len(repos_list)
+            if length > 0:
+                print Fore.BLUE + "{0:6} {1}\n".format("Num", "Repository - Description") + Fore.RESET
             for repo_index in range(length):
                 tpl = repos_list[repo_index]
                 print parser.unescape("[{0:2}] : {1} {2}".format((repo_index+1), tpl[0][1:], '- '+re.sub(r'<em>|</em>', '', tpl[2]).strip()))
 
             if length > 0:
                 if _surfing:
-                    print
+                    #print
                     current = cmd_browser.getCurrentPage(response)
-                    print "Current page: {0}".format(current)
+                    print "\nCurrent page: {0}".format(current)
                     print "Available pages: ",
                     pages = cmd_browser.parsePagination(response)
 
@@ -215,11 +217,12 @@ class cmd_line(object):
                     else:
                         if av_pages == -1:
                             av_pages = 1
-                        print av_pages if av_pages != -1 else 1
+                        print av_pages if av_pages != -1 else 1,
 
-                    prompt_message = "Choose your (package number/action) (1: DEFAULT, p: PREVIOUS, n: NEXT, r: RESET, q: QUIT): "
 
-                print
+                    prompt_message = "\nChoose your (package number/action) (1: DEFAULT, p: PREVIOUS, n: NEXT, r: RESET, q: QUIT): "
+
+                #print
                 package_number = -1
                 _input = ''
                 try:
@@ -252,7 +255,7 @@ class cmd_line(object):
                         continue
 
                     elif _input == 'q':
-                        print "Hook is quitting ..."
+                        print "\nHook is quitting ..."
                         cmd_browser.closeConnections()
                         return
 
@@ -280,7 +283,7 @@ class cmd_line(object):
                     print Back.RED+"There is no releases"+Back.RESET
 
             else:
-                print "There is no package named: {0}".format(repository)
+                print "There is no package named: {0}".format(Fore.YELLOW + repository + Fore.RESET)
 
             break
         cmd_browser.closeConnections()
@@ -300,23 +303,23 @@ class cmd_line(object):
             for package_index in range(length):
                 pkg = installed_list[package_index]
                 name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
-                print
+                #print
 
                 browser_object.setRequestedURL('https://github.com/{0}/tags'.format(pkg['repository']))
                 response = browser_object.submit()
                 versions_list = browser_object.parseVersions(response)
                 if len(versions_list) == 0 and version == 'master':
-                    print name + " is already up-to-date"
+                    print Fore.GREEN + name + Fore.RESET + " is already up-to-date"
                     continue
 
                 elif versions_list[0] == version or versions_list[0] == 'v' + version:
-                    print name + " is already up-to-date"
+                    print Fore.GREEN + name + Fore.RESET + " is already up-to-date"
                     continue
 
                 print 'Update process: ' + Fore.YELLOW + version + Fore.RESET + ' -> ' + Fore.GREEN + versions_list[0] + Fore.RESET
 
                 message = " is going to be updated to " + Fore.GREEN + name + ' (' + versions_list[0] + ')' + Fore.RESET
-                print "\n\t" + Fore.YELLOW + "{0} ({1})".format(name, version) + Fore.RESET + message
+                print "\t" + Fore.YELLOW + "{0} ({1})".format(name, version) + Fore.RESET + message
 
                 url = 'https://github.com/{0}/archive/{1}.zip'.format(pkg['repository'], versions_list[0])
                 download_manager.startQueue(url, _params={"repository": pkg['repository'], "type": "update", "old_pkg": pkg['package']})
@@ -434,7 +437,7 @@ class cmd_line(object):
                     pkg = installed_list[package_index-1]
                     name, version = re.search(r'(.+?)\-([\d\w\.]*)\.zip', pkg['package'], re.IGNORECASE).groups()
                     print
-                    print Back.RED + " DANGER ZONE " + Back.RESET
+                    print Back.RED + " DANGER ZONE " + Back.RESET + " Selected[{0}]".format(Fore.YELLOW + name + ' (' + version + ')' + Fore.RESET)
 
                     while True:
                         confirmation = raw_input("\n\t" + Fore.RED + "{0} ({1})".format(name, version) + Fore.RESET + " is going to be deleted. Are you sure (y,N): ")
@@ -492,7 +495,7 @@ class cmd_line(object):
         print Back.BLUE + " Components: " + Back.RESET + " %0.1f MB\n" % op.get_folder_size('components')['mb']
 
         components = os.listdir('components')
-        print "\t" + Fore.BLUE+"{0:32}{1:14}{2:14}\n".format("Name", "Size/(mb)", "Size/(kb)")+Fore.RESET
+        print "\t" + Fore.BLUE+"{0:32}{1:14}{2:14}\n".format("Name", "Size(mb)", "Size(kb)")+Fore.RESET
 
         for item in components:
             size = op.get_folder_size('components/' + item)
@@ -550,7 +553,7 @@ class cmd_line(object):
             if length == 0:
                 print Fore.YELLOW + 'No file matches ' + Fore.RESET + "({0})\n".format(file_name)
                 return
-
+            """
             if length == 1:
                 file_name = matching_list[0]
                 print Back.RED + " DANGER ZONE " + Back.RESET
@@ -565,7 +568,7 @@ class cmd_line(object):
                         print "Hook is quitting"
                         break
                 return
-
+            """
             _input = ''
             try:
                 print Back.BLUE + ' File(s) matching ' + Back.RESET + " ({0})".format(file_name)
@@ -648,7 +651,7 @@ class cmd_line(object):
         cache_path = op.get_home() + separator + hook.data_storage_path
         cache_list = op.list_dir(cache_path)
         length = len(cache_list)
-        print Fore.BLUE + "{0:4} {1:35}{2:8}{3:28}{4:14}{5:14}".format("Num", "File name", "Type", "time", "Size/(mb)", "Size/(kb)") + Fore.RESET
+        print Fore.BLUE + "{0:4} {1:35}{2:8}{3:28}{4:14}{5:14}".format("Num", "File name", "Type", "Downloaded at", "Size(mb)", "Size(kb)") + Fore.RESET
         print
         for index in range(length):
             try:
@@ -768,7 +771,7 @@ class cmd_line(object):
         self.__parser.add_argument('commands', nargs="*")
         self.__parser.add_argument('self-install', help="Setup working environment of hook it self", nargs="?")
         self.__parser.add_argument('init', help="Interactively create a hook.json file", nargs="?")
-        self.__parser.add_argument('create', help="Setting up environment for the project", nargs="*")
+        #self.__parser.add_argument('create', help="Setting up environment for the project", nargs="*")
         self.__parser.add_argument("install", help="Install a package(s) locally", nargs="*")
         self.__parser.add_argument("search", help="Search for a package by name", nargs="?")
         self.__parser.add_argument("list", help="List local packages", nargs="?")
@@ -832,7 +835,7 @@ class cmd_line(object):
                     self.__cmd_init(args.interactive, args.pversion, commands)
 
                 else:
-                    print "Workspace already setup"
+                    print "Workspace is already setup"
 
             elif commands[0] == 'self-install':
                 self.__cmd_self_install()
@@ -849,6 +852,10 @@ class cmd_line(object):
                 self.__cmd_list()
 
             elif commands[0] == 'update':
+                if not self.__is_workspace_setup():
+                    manager.settings_not_found_error_print()
+
+                    return
                 self.__cmd_update(commands[1:])
 
             elif commands[0] == 'uninstall':
