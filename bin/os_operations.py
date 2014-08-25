@@ -171,7 +171,15 @@ def get_folder_size(_path="."):
             filename = os.path.join(path, _file)
             folder_size += os.path.getsize(filename)
 
-    return {'mb': (folder_size/(1024*1024.0)), 'kb': (folder_size/1024.0)}
+    return {'mb': to_mb(folder_size), 'kb': to_kb(folder_size)}
+
+
+def to_mb(_bits):
+    return _bits/(1024*1024.0)
+
+
+def to_kb(_bits):
+    return _bits/1024.0
 
 
 def get_file_size(_path):

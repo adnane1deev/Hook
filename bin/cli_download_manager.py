@@ -48,7 +48,9 @@ class download_manager(object):
 
         file_handler = open(path+file_name, 'wb')
         #print
-        print "Downloading: %s Bytes: %s" % (file_name, file_size)
+        name, version = manager.package_split(file_name)
+        #print "Downloading: %s (%s): %0.2fMB" % (name, version, op.to_mb(file_size))
+        print "Downloading: " + Fore.GREEN + "%s (%s)" % (name, version) + Fore.RESET
 
         file_size_dl = 0
         block_sz = 8192
@@ -75,9 +77,11 @@ class download_manager(object):
 
             op.decompress_zipfile(cache_path, './components')
             #print
-            print "Downloading: %s Bytes: %s" % (file_name, file_size)
+            name, version = manager.package_split(file_name)
+            #print "Downloading: %s (%s): %0.2fMB" % (name, version, op.to_mb(file_size))
+            print "Downloading: " + Fore.GREEN + "%s (%s)" % (name, version) + Fore.RESET
 
-            status = r"%10d  [%s]" % (file_size,  'Loaded from the cache')
+            status = r" %10d  [%s]" % (file_size,  'Loaded from the cache')
             print status
             #print
             return False
@@ -97,9 +101,9 @@ class download_manager(object):
 
                 file_size = int(metadata.getheaders("Content-Length")[0])
                 break
-            except URLError:
-                #print ".",
-                pass
+            except URLError as e:
+                print Fore.YELLOW + str(e.code) + Fore.RESET + ": " + _url
+                return None
             except Exception:
                 #print "Couldn't resolve the URL: trying again ..."
                 pass
@@ -110,6 +114,8 @@ class download_manager(object):
         if not _params:
             _params = {'type': 'install'}
         pkg_name_size = self.__get_package_name(_url)
+        if pkg_name_size is None:
+            return None
 
         if _params['type'] == 'update' and not manager.is_package_registered(pkg_name_size['file_name']):
             if manager.is_in_cache(pkg_name_size['file_name']):

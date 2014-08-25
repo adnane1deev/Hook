@@ -116,22 +116,48 @@ class cmd_line(object):
     def __cmd_self_install(self):
         app.setup()
 
-    def __cmd_create(self):
-        print
+    def __cmd_add(self, _args):
+        file_name = 'hook.json'
+        if not op.is_exits(file_name):
+            print "hook can't find " + file_name
+            return
+
+        if len(_args) == 0:
+            return
+
+        require_list = helpers.load_json_file(file_name)
+        for arg in _args:
+            try:
+                repository, version = arg.split(':')
+                if not helper.is_repository(repository):
+                    print repository + " is not a valid repository name"
+                    continue
+
+                package = {"package": repository, "version": version}
+                require_list['require'].append(package)
+            except ValueError:
+                print arg + " is not a valid argument"
+                pass
+
+        helper.prettify(require_list)
+        op.create_file(file_name, _content=helper.object_to_json(require_list))
 
     def __cmd_install(self):
         browser_object = cli_browser.cli_browser()
         browser_connection = browser_object.getHttpConnection()
         download_manager = idm.download_manager()
         download_manager.plugInBrowserWithDownloadManager(browser_connection)
+        if not op.is_exits('hook.json'):
+            print "hook can't find hook.json"
+            return
 
-        list = helpers.load_json_file('hook.json')['require']
+        require_list = helpers.load_json_file('hook.json')['require']
         #helpers.prettify(list)
 
         urls = []
         repositories = []
 
-        for pkg in list:
+        for pkg in require_list:
             name = pkg['package']
             version = ''
 
@@ -771,6 +797,7 @@ class cmd_line(object):
         self.__parser.add_argument('commands', nargs="*")
         self.__parser.add_argument('self-install', help="Setup working environment of hook it self", nargs="?")
         self.__parser.add_argument('init', help="Interactively create a hook.json file", nargs="?")
+        self.__parser.add_argument('add', help="Add a package(s) to your hook.json", nargs="*")
         #self.__parser.add_argument('create', help="Setting up environment for the project", nargs="*")
         self.__parser.add_argument("install", help="Install a package(s) locally", nargs="*")
         self.__parser.add_argument("search", help="Search for a package by name", nargs="?")
@@ -840,8 +867,9 @@ class cmd_line(object):
             elif commands[0] == 'self-install':
                 self.__cmd_self_install()
 
-            elif commands[0] == 'create':
-                print 'create =>'
+            elif commands[0] == 'add':
+                self.__cmd_add(commands[1:])
+
             elif commands[0] == 'install':
                 self.__cmd_install()
 

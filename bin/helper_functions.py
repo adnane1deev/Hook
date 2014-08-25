@@ -21,6 +21,10 @@ def load_json_file(__FilePath=None):
         return ""
 
 
+def object_to_json(_json_object):
+    return json.dumps(_json_object, indent=4)
+
+
 def prettify(__json, __indent=4):
     print json.dumps(__json, indent=__indent)
 
