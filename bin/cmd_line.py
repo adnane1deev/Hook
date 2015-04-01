@@ -16,7 +16,7 @@ import os
 import helper_functions as helper
 import app_setup as app
 import time
-
+import subprocess as sp
 
 class cmd_line(object):
 
@@ -115,6 +115,57 @@ class cmd_line(object):
 
     def __cmd_self_install(self):
         app.setup()
+
+    def __cmd_create(self, _args, _version=False, _foundation=False, _bootstrap=False):
+        step = ""
+
+        if not _version:
+            if len(_args) < 3:
+                print Fore.YELLOW + "Not enough arguments" + Fore.RESET
+                return
+        else:
+            if len(_args) < 4:
+                print Fore.YELLOW + "Not enough arguments" + Fore.RESET
+                return
+
+        project_type = _args[0]
+        project_name = _args[2]
+
+        if project_type != "dynamic" and project_type != "static":
+            print Back.RED + " Unrecognized command " + Back.RESET
+            return
+
+        if project_type == "dynamic":
+            try:
+                step = "php"
+                print "checking if php is installed on the system ..."
+                sp.check_call(['php', '-v'])
+                print "php is verified successfully"
+
+                print "downloading composer to your current working directory ..."
+                if not op.is_exits('composer.phar'):
+                    ps = sp.Popen(('php', '-r', "readfile('https://getcomposer.org/installer');"), stdout=sp.PIPE)
+                    output = sp.check_output('php', stdin=ps.stdout)
+                    ps.wait()
+                    print "composer is successfully downloaded, you can use separately by typing composer.phar [options] command [arguments] in your command prompt"
+                else:
+                    print "composer downloading operation is canceled, composer is found in your current working directory"
+
+                if not _version:
+                    sp.call(['php', 'composer.phar', 'create-project', _args[1], project_name])
+                elif _version:
+                    sp.call(['php', 'composer.phar', 'create-project', _args[1], project_name, _args[3]])
+
+            except:
+                if step == "php":
+                    print Fore.YELLOW + "php is not found in your system's environment path, you may first setup your local development environment and try again" + Fore.RESET
+                elif step == "composer":
+                    print Fore.YELLOW + "composer is not found in your system's environment path, use --getcomposer option instead" + Fore.RESET
+
+        elif project_type == "static":
+            pass
+
+
 
     def __cmd_add(self, _args):
         file_name = 'hook.json'
@@ -217,7 +268,6 @@ class cmd_line(object):
                 #cmd_browser.setRequestedURL("https://github.com/search?q={0}&p={1}&type=Repositories&ref=searchresults".format(repository, current))
             repos_list = cmd_browser.parseResponse(response)
 
-
             parser = HTMLParser()
             length = len(repos_list)
             if length > 0:
@@ -316,6 +366,9 @@ class cmd_line(object):
 
     def __cmd_list(self):
         manager.get_list_of_installed_packages()
+
+    def __cmd_info(self):
+        print "information"
 
     def __cmd_update(self, args):
         if not args:
@@ -769,6 +822,49 @@ class cmd_line(object):
         print "{0}{1:19}{2}".format((" " * 2), 'info', "show basic information about cached files")
         print "{0}{1:19}{2}".format((" " * 2), 'remove', "remove selected file from cache")
         print "{0}{1:19}{2}".format((" " * 2), 'rename', "rename selected cached file")
+        print "{0}{1:19}{2}".format((" " * 2), 'register', "register package manually in your local cache")
+        print "{0}{1:19}{2}".format((" " * 2), 'repackage', "modify and repackage an already register package in your cache")
+        print "{0}{1:19}{2}".format((" " * 2), 'load', "load a package to your current working directory")
+
+    def __cache_register(self, _args):
+        separator = op.separator()
+        cache_path = op.get_home() + separator + hook.data_storage_path
+
+        if len(_args) > 0:
+            str_list = filter(None, _args[0].split(separator))
+            _foldername = _args[0]
+            _zipfilename = str_list[-1]
+            print _zipfilename
+            op.compress_folder(_foldername, cache_path + separator + _zipfilename + '.zip')
+
+        else:
+            print Fore.YELLOW + "Not enough arguments" + Fore.RESET
+
+    def __cache_repackage(self, _args):
+        print 'repackage'
+
+    def __cache_load(self, _args):
+        if not op.is_exits('.hook/workspace_settings.json'):
+            manager.settings_not_found_error_print()
+
+            return
+
+        separator = op.separator()
+        cache_path = op.get_home() + separator + hook.data_storage_path
+
+        if len(_args) > 0:
+            _filename = _args[0]
+
+            if manager.is_in_cache(_filename + '.zip'):
+                download_manager = idm.download_manager()
+                download_manager.load_from_cache(_filename + '.zip', op.get_file_size(cache_path + separator + _filename + '.zip')['kb'])
+                manager.register_installed_package(_filename + '.zip', _filename + '/' + _filename)
+
+            else:
+                print Fore.YELLOW + _filename + " is not registered in the cache" + Fore.RESET
+
+        else:
+            print Fore.YELLOW + "Not enough arguments" + Fore.RESET
 
     def __cmd_cache(self, cache_cmd):
         """
@@ -789,19 +885,87 @@ class cmd_line(object):
         elif cache_cmd[0] == 'help':
             self.__cache_help()
 
+        elif cache_cmd[0] == 'register':
+            self.__cache_register(cache_cmd[1:])
+
+        elif cache_cmd[0] == 'repackage':
+            self.__cache_repackage(cache_cmd[1:])
+
+        elif cache_cmd[0] == 'load':
+            self.__cache_load(cache_cmd[1:])
+
         else:
             print Back.RED + " Unrecognized command " + Back.RESET
             self.__cache_help()
+
+    def __cmd_download(self, _args):
+        browser_object = cli_browser.cli_browser()
+        browser_connection = browser_object.getHttpConnection()
+        download_manager = idm.download_manager()
+        download_manager.plugInBrowserWithDownloadManager(browser_connection)
+
+        urls = []
+        repositories = []
+        if len(_args) > 0:
+            repository = ''
+            version = ''
+
+            for arg in _args:
+                if helper.is_http_url(arg):
+                    info = helper.http_url_package(arg)
+                    repository = info[0] + '/' + info[1]
+                    version = '*'
+                elif helper.is_ssh_url(arg):
+                    info = helper.ssh_url_package(arg)
+                    repository = info[0] + '/' + info[1]
+                    version = '*'
+                elif helper.is_repository(arg):
+                    repository = arg
+                    version = '*'
+                else:
+                    try:
+                        repository, version = arg.split(':')
+                    except ValueError:
+                        print arg + " is not a valid argument"
+                        continue
+
+                if version == '*':
+                    browser_object.setRequestedURL('https://github.com/{0}/tags'.format(repository))
+                    response = browser_object.submit()
+                    versions_list = browser_object.parseVersions(response)
+
+                    if len(versions_list) == 0:
+                        print Back.RED + 'No releases for {0}'.format(repository) + Back.RESET
+                        version = 'master'
+
+                    else:
+                        version = versions_list[0]
+
+                #url = 'https://github.com/fabpot/Twig/archive/v1.16.0.zip'
+                url = 'https://github.com/{0}/archive/{1}.zip'.format(repository, version)
+                repositories.append(repository)
+                #print url
+                urls.append(url)
+
+
+            download_manager.startQueue(urls, _repositories=repositories, _params={'type': 'download'})
+            browser_connection.close()
+            browser_object.closeConnections()
+        else:
+            print Fore.YELLOW + "Not enough arguments" + Fore.RESET
 
     def __initCommands(self):
         self.__parser.add_argument('commands', nargs="*")
         self.__parser.add_argument('self-install', help="Setup working environment of hook it self", nargs="?")
         self.__parser.add_argument('init', help="Interactively create a hook.json file", nargs="?")
+        self.__parser.add_argument('create', help="Create dynamic/static project with a specific package", nargs="*")
+        self.__parser.add_argument('download', help="Download package in your current working directory", nargs="?")
         self.__parser.add_argument('add', help="Add a package(s) to your hook.json", nargs="*")
         #self.__parser.add_argument('create', help="Setting up environment for the project", nargs="*")
         self.__parser.add_argument("install", help="Install a package(s) locally", nargs="*")
         self.__parser.add_argument("search", help="Search for a package by name", nargs="?")
         self.__parser.add_argument("list", help="List local packages", nargs="?")
+        self.__parser.add_argument("info", help="Show information of a particular package", nargs="?")
         self.__parser.add_argument("update", help="Update a local package", nargs="?")
         self.__parser.add_argument("uninstall", help="Remove a local package", nargs="?")
         self.__parser.add_argument("profile", help="Show memory usage of the working directory", nargs="?")
@@ -809,11 +973,14 @@ class cmd_line(object):
         self.__parser.add_argument("cache", help="Manage hook cache", nargs="?")
 
     def __initOptions(self):
-        self.__parser.add_argument("-f", "--force", help="Makes various commands more forceful", action="store_true")
+        #self.__parser.add_argument("-f", "--force", help="Makes various commands more forceful", action="store_true")
         self.__parser.add_argument("-j", "--json", help="Output consumable JSON", action="store_true")
         self.__parser.add_argument("-i", "--interactive", help="Makes various commands work interactively", action="store_true")
         self.__parser.add_argument("-p", "--pversion", help="Tells if you want to get specific version of packages", action="store_true")
         self.__parser.add_argument("-s", "--surf", help="Allows you to paginate packages list", action="store_true")
+        self.__parser.add_argument("-c", "--getversion", help="specify your target version", action="store_true")
+        self.__parser.add_argument("-b", "--getbootstrap", help="setup web application using twitter bootstrap", action="store_true")
+        self.__parser.add_argument("-f", "--getfoundation", help="setup web application using zurb foundation", action="store_true")
 
     def __setup_workspace(self, _packages, _settings):
         op.create_directory('.hook')
@@ -857,7 +1024,6 @@ class cmd_line(object):
             commands = args.commands
             self.logoPrint(commands[0])
             if commands[0] == 'init':
-
                 if not self.__is_workspace_setup():
                     self.__cmd_init(args.interactive, args.pversion, commands)
 
@@ -866,6 +1032,12 @@ class cmd_line(object):
 
             elif commands[0] == 'self-install':
                 self.__cmd_self_install()
+            
+            elif commands[0] == 'create':
+                self.__cmd_create(commands[1:], args.getversion, args.getfoundation, args.getbootstrap)
+
+            elif commands[0] == 'download':
+                self.__cmd_download(commands[1:])
 
             elif commands[0] == 'add':
                 self.__cmd_add(commands[1:])
@@ -878,6 +1050,9 @@ class cmd_line(object):
 
             elif commands[0] == 'list':
                 self.__cmd_list()
+
+            elif commands[0] == 'info':
+                self.__cmd_info()
 
             elif commands[0] == 'update':
                 if not self.__is_workspace_setup():
@@ -908,6 +1083,6 @@ class cmd_line(object):
             else:
                 self.__parser.print_help()
 
-        except IndexError as ex:
+        except IndexError:
             print "\n" + Back.RED + Fore.WHITE + ' Not enough arguments ' + Fore.RESET + Back.RESET
             self.__parser.print_help()

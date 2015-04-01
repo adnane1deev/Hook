@@ -134,10 +134,7 @@ def generate_json_file(_filename, _pkg_list):
 
 
 def separator():
-    if define_operation_system() == 'windows':
-        return '\\'
-
-    return '/'
+    return os.sep
 
 
 def create_tree(_tree):
@@ -152,6 +149,20 @@ def decompress_zipfile(_filename, _to_path):
     try:
         zip_archive = ZipFile(_filename, mode="r", compression=ZIP_STORED, allowZip64=False)
         zip_archive.extractall(path=_to_path)
+        zip_archive.close()
+    except IOError as (nerror, strerror):
+        print nerror, ' ', strerror
+    except BadZipfile as e:
+        print e.message
+
+
+def compress_folder(_foldername, _zipfilename):
+    try:
+        zip_archive = ZipFile(_zipfilename, mode="w")
+        for root, dirs, files in os.walk(_foldername):
+            for file in files:
+                zip_archive.write(os.path.join(root, file))
+
         zip_archive.close()
     except IOError as (nerror, strerror):
         print nerror, ' ', strerror

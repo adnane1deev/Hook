@@ -36,6 +36,11 @@ def is_ssh_url(_ssh):
     return False
 
 
+def ssh_url_package(_ssh):
+    m = re.search(r"com:(.+?)/(.+?)\.git", _ssh, re.IGNORECASE)
+    return m.groups()
+
+
 def is_http_url(_http):
     if re.match(r"https?://(?:www)?(?:[\w-]{2,255}(?:\.\w{2,6}){1,2})(?:/[\w&%?#-]{1,300})?", _http) is not None:
         return True
@@ -43,8 +48,13 @@ def is_http_url(_http):
     return False
 
 
+def http_url_package(_http):
+    m = re.search(r"com/(.+?)/(.+?)\.git", _http, re.IGNORECASE)
+    return m.groups()
+
+
 def is_repository(_repository):
-    if re.match(r"[\w\-]+/[\w\-\.]+", _repository, re.IGNORECASE) is not None:
+    if re.match(r"^[\w\-]+/[\w\-\.]+$", _repository, re.IGNORECASE) is not None:
         return True
 
     return False

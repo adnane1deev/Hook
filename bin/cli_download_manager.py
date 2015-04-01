@@ -40,7 +40,7 @@ class download_manager(object):
 
         return False
 
-    def __download(self, _url, _name_size):
+    def __download(self, _url, _name_size, _params=None):
         http_connection = self.__browser.open(_url)
         file_size = _name_size['file_size']
         file_name = _name_size['file_name']
@@ -69,13 +69,19 @@ class download_manager(object):
         file_handler.close()
         print
 
-        op.decompress_zipfile(path+file_name, './components')
+        if not _params:
+            op.decompress_zipfile(path+file_name, './components')
+        else:
+            op.decompress_zipfile(path+file_name, '.')
 
-    def load_from_cache(self, file_name, file_size):
+    def load_from_cache(self, file_name, file_size, _params=None):
         if self.is_in_cache(file_name):
             cache_path = op.get_home()+'/'+hook.data_storage_path+'/'+file_name
 
-            op.decompress_zipfile(cache_path, './components')
+            if not _params:
+                op.decompress_zipfile(cache_path, './components')
+            else:
+                op.decompress_zipfile(cache_path, '.')
             #print
             name, version = manager.package_split(file_name)
             #print "Downloading: %s (%s): %0.2fMB" % (name, version, op.to_mb(file_size))
@@ -113,6 +119,7 @@ class download_manager(object):
     def __get_file(self, _url, _repository=None, _params=None):
         if not _params:
             _params = {'type': 'install'}
+
         pkg_name_size = self.__get_package_name(_url)
         if pkg_name_size is None:
             return None
@@ -144,13 +151,19 @@ class download_manager(object):
                 self.__download(_url, pkg_name_size)
                 manager.register_installed_package(pkg_name_size['file_name'], _repository)
 
+        elif _params['type'] == 'download':
+            if manager.is_in_cache(pkg_name_size['file_name']):
+                self.load_from_cache(pkg_name_size['file_name'], pkg_name_size['file_size'], _params)
+            else:
+                self.__download(_url, pkg_name_size, _params)
+
     def startQueue(self, _url_s, _repositories=None, _params=None):
         try:
             if isinstance(_url_s, types.ListType):
                 #print 'list'
                 length = len(_url_s)
                 for index in range(length):
-                    self.__get_file(_url_s[index], _repositories[index])
+                    self.__get_file(_url_s[index], _repositories[index], _params)
 
             elif isinstance(_url_s, types.StringType):
                 #print 'str'

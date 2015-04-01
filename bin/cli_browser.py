@@ -100,7 +100,7 @@ class cli_browser(object):
                 if attempts < 10:
                     attempts += 1
 
-                    status = "\r\tChecking for bots %s" % (self.gen(attempts))
+                    status = "\r\tChecking for bots/connection problem %s" % (self.gen(attempts))
                     #print status,
                     sys.stdout.write(status)
                     sys.stdout.flush()
@@ -121,7 +121,9 @@ class cli_browser(object):
     def parseResponse(self, _response):
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s
         #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*<p.+\n*\s*(.+?)\n
-        repositories = re.findall(r'<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*(<p\sclass="description css-truncate-target">\n\s*(.+?)\n|)', _response, re.IGNORECASE)
+        #old regex bellow
+        #<h3\s?class="repolist-name">\n\s*<a\s?href="(.*)"\s.+\s*.+\s?\n*.+\n*\s*(<p\sclass="description css-truncate-target">\n\s*(.+?)\n|)
+        repositories = re.findall(r'<h3\s?class="repo-list-name">\n\s*<a\s?href="(.*)">.*?</a>\n\s*.*[\n\s]*(<p\sclass="repo-list-description">\n\s*(.+?)\n|)', _response, re.IGNORECASE)
         return repositories
 
     def parsePagination(self, _response=None):
@@ -149,6 +151,9 @@ class cli_browser(object):
     def parseVersions(self, _res):
         #<span class="tag-name">(.+?)</span>
         #tags\?after=
+        if not _res:
+            return []
+
         return re.findall(r'<span class="tag-name">(.+?)</span>', _res, re.IGNORECASE)
 
     def __isStillMore(self, _response):
